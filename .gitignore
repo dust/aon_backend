@@ -1,4 +1,7 @@
 __pycache__/
+include/
 bin/
 lib/
+*.cfg
+logs/
 
