@@ -58,6 +58,25 @@ def detail_token(request):
     res = ResMsg(data=t)
     return res.data
 
+def recent_trade(request):
+    token = request.args.get("token", "")
+    if not token:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    rows = db.session.query(Trade).filter(Trade.token_address == token).order_by(Trade.ctime.desc()).limit(100).all()
+    res = ResMsg(data=rows)
+    return res.data
+
+def kline_item(request):
+    token = request.args.get("token", "")
+    if not token:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    (page_no, page_size) = get_page_args(request)
+    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Trade.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    res = ResMsg(data=rows)
+    return res.data
+
 def top_holder(request):
     res = ResMsg()
     return res.data
@@ -75,11 +94,13 @@ def my_token(request):
     
     return res.data
 
-def get_page_args(request):
+def get_page_args(request, def_pn=1, def_ps=10):
     page_no = request.args.get('pageNo', default=1, type=int)
     page_size = request.args.get('pageSize', default=10, type=int)
     if page_no < 1:
-        page_no = 1
-    if page_size > 100 or page_size < 1:
-        page_size = 10
+        page_no = def_pn
+    if def_ps == 10 and (page_size > 100 or page_size < 1):
+        page_size = def_ps
+    if def_ps > 10:
+        page_size = def_ps
     return (page_no, page_size)

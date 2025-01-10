@@ -6,7 +6,7 @@ from flask.json import JSONEncoder as BaseJSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
 
-from aon.model import Token, Comment
+from aon.model import Token, Comment, Trade, Kline
 
 scheduler = APScheduler()
 
@@ -25,6 +25,8 @@ class JSONEncoder(BaseJSONEncoder):
             return JSONEncoder.fmt_token(o)
         if isinstance(o, Comment):
             return JSONEncoder.fmt_comment(o)
+        if isinstance(o, Trade):
+            return JSONEncoder.fmt_trade(o)
         if isinstance(o, datetime.datetime):
             # 格式化时间
             return o.strftime("%Y-%m-%d %H:%M:%S")
@@ -42,6 +44,39 @@ class JSONEncoder(BaseJSONEncoder):
             return o.decode("utf-8")
         return super(JSONEncoder, self).default(o)
     
+    @staticmethod
+    def fmt_trade(o: Trade):
+        return {
+            'txId': o.tx_id,
+            'id': o.id,
+            'index': o.index_id,
+            'price': o.price * o.eth_price,
+            'trader': o.trader,
+            'qty': o.amount,
+            'quoteQty': o.eth_amount,
+            'isBuy': True if o.is_buy == 1 else False,
+            'ctime': o.ctime,
+            'aonFee': o.aon_fee,
+            'ethPrice': o.eth_price,
+            'token': o.token_address
+        }
+    
+    @staticmethod
+    def fmt_kline(o: Kline):
+        return [
+            o.open_ts,
+            o.o,
+            o.h,
+            o.l,
+            o.c,
+            o.vol,
+            o.close_ts,
+            o.amount,
+            o.cnt,
+            o.buy_vol,
+            o.buy_amount
+        ]
+
     @staticmethod
     def fmt_comment(o: Comment):
         base =  {

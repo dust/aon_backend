@@ -77,6 +77,7 @@ class Kline(Base):
 
     id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     token_address = Column(String, nullable=False)
+    open_ts = Column(Integer, nullable=False)
     o = Column(DECIMAL(36,18), nullable=False)
     h = Column(DECIMAL(36,18), nullable=False)
     l = Column(DECIMAL(36,18), nullable=False)
@@ -86,7 +87,7 @@ class Kline(Base):
     cnt = Column(DECIMAL(36,18), nullable=False)
     buy_vol = Column(DECIMAL(36,18), nullable=False)
     buy_amount = Column(DECIMAL(36,18), nullable=False)
-    ts = Column(Integer, nullable=False)
+    close_ts = Column(Integer, nullable=False)
     ctime = Column(TIMESTAMP, nullable=False, server_default="current_timestamp")
 
 
