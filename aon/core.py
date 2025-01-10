@@ -6,7 +6,7 @@ from flask.json import JSONEncoder as BaseJSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
 
-from aon.model import Token
+from aon.model import Token, Comment
 
 scheduler = APScheduler()
 
@@ -23,6 +23,8 @@ class JSONEncoder(BaseJSONEncoder):
         """
         if isinstance(o, Token):
             return JSONEncoder.fmt_token(o)
+        if isinstance(o, Comment):
+            return JSONEncoder.fmt_comment(o)
         if isinstance(o, datetime.datetime):
             # 格式化时间
             return o.strftime("%Y-%m-%d %H:%M:%S")
@@ -40,6 +42,17 @@ class JSONEncoder(BaseJSONEncoder):
             return o.decode("utf-8")
         return super(JSONEncoder, self).default(o)
     
+    @staticmethod
+    def fmt_comment(o: Comment):
+        base =  {
+            'contract': o.contract_address,
+            'creator': o.created_by,
+            'content': o.content,
+            'ctime': o.ctime,
+            'id': o.id
+        }
+        return base
+
     @staticmethod
     def fmt_token(o: Token):
         base =  {

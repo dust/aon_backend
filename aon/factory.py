@@ -95,7 +95,7 @@ def scheduler_init(app):
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             scheduler.init_app(app)
             scheduler.start()
-            app.logger.debug('Scheduler Started,---------------')
+            app.logger.info('Scheduler Started,---------------')
         except:
             pass
 

@@ -9,7 +9,6 @@ from aon.model import Token, Trade, Kline, ListedToken
 
 logger = logging.getLogger(__name__)
 
-
 def create_token(request):
     symbol = request.json.get('symbol', '')
     res = ResMsg()
@@ -40,12 +39,7 @@ def create_token(request):
     return res.data
 
 def list_token(request):
-    page_no = request.args.get('pageNo', default=1, type=int)
-    page_size = request.args.get('pageSize', default=10, type=int)
-    if page_no < 1:
-        page_no = 1
-    if page_size > 100 or page_size < 1:
-        page_size = 10
+    (page_no, page_size) = get_page_args(request)
     rows = db.session.query(Token).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
 
@@ -56,7 +50,12 @@ def list_token(request):
     return res.data
 
 def detail_token(request):
-    res = ResMsg()
+    token = request.args.get("contract", "")
+    if not token:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    t = db.session.query(Token).filter(Token.contract_address == token).one_or_none()
+    res = ResMsg(data=t)
     return res.data
 
 def top_holder(request):
@@ -64,5 +63,23 @@ def top_holder(request):
     return res.data
 
 def my_token(request):
+    my_address = request.args.get("address", "")
     res = ResMsg()
+    if not my_address:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    (page_no, page_size) = get_page_args(request)
+    
+    rows = db.session.query(Token).filter(Token.creator==my_address).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    res = ResMsg(data=rows)
+    
     return res.data
+
+def get_page_args(request):
+    page_no = request.args.get('pageNo', default=1, type=int)
+    page_size = request.args.get('pageSize', default=10, type=int)
+    if page_no < 1:
+        page_no = 1
+    if page_size > 100 or page_size < 1:
+        page_size = 10
+    return (page_no, page_size)

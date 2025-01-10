@@ -1,7 +1,14 @@
+from decimal import Decimal
+from datetime import datetime
+import numpy as np
+
 from aon.graph import *
 from aon.model import *
-import numpy as np
-from decimal import Decimal
+
+
+def my_job():
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
 
 def eth_num(amt: np.float64):
     return Decimal(str(amt/(10**18)))
@@ -40,9 +47,6 @@ def retrieve_token(sess):
                 holder_cnt=holder_cnt
                 ))
         sess.commit()
-
-
-
 
 def retrieve_trade(sess):
     last_index = get_trade_last_index(sess)

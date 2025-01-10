@@ -21,7 +21,7 @@ def post_comment(request):
         return res.data
 
     c = Comment(
-        token=request.json.get('token'),
+        contract_address=request.json.get('token'),
         content=request.json.get('content'),
         created_by=request.json.get('createdBy')
     )
