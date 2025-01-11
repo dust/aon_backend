@@ -27,6 +27,8 @@ class JSONEncoder(BaseJSONEncoder):
             return JSONEncoder.fmt_comment(o)
         if isinstance(o, Trade):
             return JSONEncoder.fmt_trade(o)
+        if isinstance(o, Kline):
+            return JSONEncoder.fmt_kline(o)
         if isinstance(o, datetime.datetime):
             # 格式化时间
             return o.strftime("%Y-%m-%d %H:%M:%S")
