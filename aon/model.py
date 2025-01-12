@@ -18,6 +18,7 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     contract_address = Column(String, nullable=False)
+    avatar = Column(String)
     content = Column(String, nullable=False)
     created_by = Column(String, nullable=False)
     ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
@@ -30,7 +31,7 @@ class Token(Base):
     name = Column(String, nullable=False)
     symbol = Column(String, nullable=False)
     price = Column(DECIMAL(36,18), nullable=False, server_default=text("0.0000"))
-    index_id = Column(Integer, nullable=False)
+    index_id = Column(Integer, nullable=False, server_default=text("0"))
     listed = Column(SMALLINT, nullable=False, server_default=text("0"))
     pair_contract = Column(String)
     creator = Column(String, nullable=False)

@@ -27,12 +27,13 @@ def create_token(request):
         symbol=symbol,
         contract_address=request.json.get("contract"),
         image=request.json.get("image"),
-        creator=request.json.get("creator"),
+        creator=request.json.get("createdBy"),
         tags=request.json.get("tags"),
         description=request.json.get("description"),
         website=request.json.get("website"),
         tg=request.json.get("tg"),
-        x=request.json.get("x")
+        x=request.json.get("x"),
+        index_id=0
     )
     db.session.add(t)
     db.session.commit()

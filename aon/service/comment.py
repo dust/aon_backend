@@ -23,6 +23,7 @@ def post_comment(request):
     c = Comment(
         contract_address=request.json.get('token'),
         content=request.json.get('content'),
+        avatar=request.json.get("avatar"),
         created_by=request.json.get('createdBy')
     )
     db.session.add(c)

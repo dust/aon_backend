@@ -108,3 +108,25 @@ curl -X GET -H "Content-Type: application/json" "http://127.0.0.1:8080/tx/recent
 }
 ```
 
+### create token
+
+* request
+
+``` shell
+
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"name":"AI Agent","symbol":"MTK","image":"http://gips3.baidu.com/it/u=119870705,2790914505&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=720","contract":"0x54791a2d86e73b5f24c7921816e9251ca191c3d4","tags":"","description":"This is a mock token for testing","totalSupply":"0.01","website":"https://www.baidu.com","tg":"https://www.baidu.com","x":"https://www.baidu.com","fee":"0.01","createdBy":"0xb492192a8793ec8c2c00379a6de6c9dac8f3bc91"}' \
+http://127.0.0.1:8080/token/create
+``` 
+* response
+``` json
+{
+  "code": 0,
+  "data": null,
+  "lang": "en",
+  "msg": "success"
+}
+```
+
+
