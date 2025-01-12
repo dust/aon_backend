@@ -6,6 +6,7 @@ from aon.response import ResMsg
 from aon.core import db
 from aon.model import Token, Trade, Kline, ListedToken
 from aon.graph import fetch_top_holder
+from aon.service.job import eth_num
 
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ def top_holder(request):
     rows = []
     if df is not None and not df.empty:
         idx = df.index
-        rows = [{'holder': df['tokenHolders_holder'][i], 'amount':df['tokenHolders_amount'][i], 'id':df['tokenHolders_id'][i]} for i in idx]
+        rows = [{'holder': df['tokenHolders_holder'][i], 'amount':eth_num(df['tokenHolders_amount'][i]), 'id':df['tokenHolders_id'][i]} for i in idx]
     res = ResMsg(data=rows)
     return res.data
 
