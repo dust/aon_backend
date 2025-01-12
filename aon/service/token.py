@@ -5,6 +5,7 @@ from aon.code import ResponseCode
 from aon.response import ResMsg
 from aon.core import db
 from aon.model import Token, Trade, Kline, ListedToken
+from aon.graph import fetch_top_holder
 
 
 logger = logging.getLogger(__name__)
@@ -43,11 +44,6 @@ def list_token(request):
     (page_no, page_size) = get_page_args(request)
     rows = db.session.query(Token).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
-
-    # if not pubkey:
-    #     res.update(code=ResponseCode.InvalidParameter)
-    #     return res.data
-    # logger.info("res.data= %s", res.data)
     return res.data
 
 def detail_token(request):
@@ -62,6 +58,7 @@ def detail_token(request):
 def recent_trade(request):
     token = request.args.get("token", "")
     if not token:
+        res = ResMsg()
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     rows = db.session.query(Trade).filter(Trade.token_address == token).order_by(Trade.ctime.desc()).limit(100).all()
@@ -79,7 +76,18 @@ def kline_item(request):
     return res.data
 
 def top_holder(request):
-    res = ResMsg()
+    token = request.args.get("token", "")
+    if not token:
+        res = ResMsg()
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    
+    df = fetch_top_holder(token)
+    rows = []
+    if df is not None and not df.empty:
+        idx = df.index
+        rows = [{'holder': df['tokenHolders_holder'][i], 'amount':df['tokenHolders_amount'][i], 'id':df['tokenHolders_id'][i]} for i in idx]
+    res = ResMsg(data=rows)
     return res.data
 
 def my_token(request):

@@ -2,6 +2,7 @@ import datetime
 import decimal
 import uuid
 
+from flask_caching import Cache
 from flask.json import JSONEncoder as BaseJSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
@@ -11,6 +12,7 @@ from aon.model import Token, Comment, Trade, Kline
 scheduler = APScheduler()
 
 db = SQLAlchemy()
+cache = Cache()
 
 
 class JSONEncoder(BaseJSONEncoder):

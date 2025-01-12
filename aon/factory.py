@@ -6,7 +6,7 @@ import yaml
 import os
 from flask import Flask
 
-from aon.core import JSONEncoder, db, scheduler
+from aon.core import JSONEncoder, db, scheduler, cache
 from aon.api.router import router
 from aon.exception import *
 from aon.response import ResMsg
@@ -35,6 +35,7 @@ def create_app(config_name, config_path=None):
     # 注册数据库连接
     db.app = app
     db.init_app(app)
+    cache.init_app(app)
 
     #@app.errorhandler(Exception)
     #def handle_expired_error(e):

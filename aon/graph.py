@@ -29,7 +29,7 @@ def fetch_listed_token(index=0):
     df = sg.query_df([latest.blockNum, latest.id, latest.index, latest.pair, latest.timestamp, latest.token.id])
     return df
 
-def fetch_top_token(contract_address):
+def fetch_top_holder(contract_address):
     holder = aon.TokenHolder
     latest = aon.Query.tokenHolders(where=[holder.token.id == contract_address])
     df = sg.query_df([latest.amount, latest.id, latest.holder, latest.index, latest.amount])
