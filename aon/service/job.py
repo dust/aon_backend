@@ -26,8 +26,11 @@ def eth_num(amt: np.float64):
 @scheduler.task('interval', id='fetch_all', seconds=300, misfire_grace_time=900)
 def fetch_all():
     sess = init_session()
-    retrieve_trade(sess)
-    retrieve_token(sess)
+    try:
+        retrieve_trade(sess)
+        retrieve_token(sess)
+    finally:
+        sess.close()
 
 def retrieve_token(sess: Session):
     last_index = get_token_last_index(sess)
