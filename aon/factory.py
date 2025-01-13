@@ -41,9 +41,7 @@ def create_app(config_name, config_path=None):
     #def handle_expired_error(e):
     #    return ResMsg(code=ResponseCode.SystemError).data, 500
 
-    # 启动定时任务
-    if app.config.get("SCHEDULER_OPEN"):
-        scheduler_init(app)
+    scheduler_init(app)
 
     # 日志文件目录
     if not os.path.exists(app.config['LOGGING_PATH']):
