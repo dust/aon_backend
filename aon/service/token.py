@@ -104,6 +104,17 @@ def my_token(request):
     
     return res.data
 
+def ticker_24h(request):
+    token = request.args.get("token", "")
+    if not token:
+        res = ResMsg()
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    
+    d = {'volume': 20044, 'price': 0.00015, 'change':0.00003, 'percentage':"-0.03"}
+    res = ResMsg(data=d)
+    return res.data
+
 def get_page_args(request, def_pn=1, def_ps=10):
     page_no = request.args.get('pageNo', default=1, type=int)
     page_size = request.args.get('pageSize', default=10, type=int)

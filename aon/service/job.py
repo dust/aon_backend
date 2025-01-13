@@ -16,6 +16,7 @@ def eth_price():
     resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
     if resp.status_code == 200:
         js = resp.json()
+        print(js)
         cache.set(js['symbol'], Decimal(js['price']))
     resp.close()
 
