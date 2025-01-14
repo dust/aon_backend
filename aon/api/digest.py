@@ -17,7 +17,7 @@ def eth_price():
     if resp.status_code == 200:
         js = resp.json()
         if 'tickers' in js and len(js['tickers']) >0:
-            cache.set("ETHUSDT", Decimal(js['tickers'][0]['last']))
+            cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
     res = ResMsg(data=cache.get("ETHUSDT"))
     return res.data
 

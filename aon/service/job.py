@@ -1,6 +1,7 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
+import pandas as pd
 import requests
 
 from aon.graph import *
@@ -17,7 +18,7 @@ def eth_price():
     if resp.status_code == 200:
         js = resp.json()
         if 'tickers' in js and len(js['tickers']) >0:
-            cache.set("ETHUSDT", Decimal(js['tickers'][0]['last']))
+            cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
     resp.close()
 
 
@@ -30,8 +31,63 @@ def fetch_all():
     try:
         retrieve_trade(sess)
         retrieve_token(sess)
+        gen_kline(sess)
     finally:
         sess.close()
+
+def gen_kline(sess: Session):
+    tokens = sess.query(Token).order_by(Token.index_id.desc()).all()
+    for t in tokens:
+        gen_token_kline_1min(sess, t.contract_address)
+
+def gen_token_kline_1min(sess:Session, token: str):
+    latest_open_ts = sess.query(Kline.open_ts).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).scalar()
+    if latest_open_ts is None:
+        latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
+        if latest_open_ts is None:
+            # no trade
+            return
+    else:
+        latest_open_ts = datetime.fromtimestamp(latest_open_ts) + timedelta(minutes=1)
+    
+    rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
+    df = pd.DataFrame(
+        [
+            {
+                "price": np.float64(row.price),
+                "volume": np.float64(row.amount),
+                "eth_vol": np.float64(row.eth_amount),
+                "ctime": row.ctime,
+            }
+            for row in rows
+        ]
+    ).set_index("ctime").sort_index()
+    ohlcv = df.resample('1min').agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
+    ohlcv = ohlcv.ffill()
+    idx = ohlcv.index
+    count = 0
+    try:
+        for i in idx:
+            sess.add(Kline(
+                token_address=token,
+                open_ts=i.to_pydatetime(),
+                o=Decimal(str(ohlcv['price']['open'][i])),
+                h=Decimal(str(ohlcv['price']['high'][i])),
+                l=Decimal(str(ohlcv['price']['low'][i])),
+                c=Decimal(str(ohlcv['price']['close'][i])),
+                vol=Decimal(str(ohlcv['volume']['volume'][i])),
+                amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
+                cnt=0,
+                buy_vol=0,
+                buy_amount=0,
+                close_ts=i.to_pydatetime()+timedelta(minutes=1)
+            ))
+            count += 1
+            if count % 100 == 0 or count >= len(idx) -1:
+                sess.commit()
+    except Exception as ex:
+        sess.rollback()
+        logger.error(f"{ex}")
 
 def retrieve_token(sess: Session):
     last_index = get_token_last_index(sess)
