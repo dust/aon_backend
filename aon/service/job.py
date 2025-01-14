@@ -70,7 +70,7 @@ def gen_token_kline_1min(sess:Session, token: str):
         for i in idx:
             sess.add(Kline(
                 token_address=token,
-                open_ts=i.to_pydatetime(),
+                open_ts=i.to_pydatetime().timestamp(),
                 o=Decimal(str(ohlcv['price']['open'][i])),
                 h=Decimal(str(ohlcv['price']['high'][i])),
                 l=Decimal(str(ohlcv['price']['low'][i])),
@@ -80,7 +80,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                 cnt=0,
                 buy_vol=0,
                 buy_amount=0,
-                close_ts=i.to_pydatetime()+timedelta(minutes=1)
+                close_ts=(i.to_pydatetime()+timedelta(minutes=1)).timestamp()
             ))
             count += 1
             if count % 100 == 0 or count >= len(idx) -1:
