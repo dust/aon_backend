@@ -64,7 +64,10 @@ def gen_token_kline_1min(sess:Session, token: str):
             }
             for row in rows
         ]
-    ).set_index("ctime").sort_index()
+    )
+    if df.empty:
+        return
+    df = df.set_index("ctime").sort_index()
     ohlcv = df.resample('1min').agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
     ohlcv = ohlcv.ffill()
     idx = ohlcv.index
