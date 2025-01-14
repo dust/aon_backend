@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
     # print("my_job:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
+    resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
-        print(js)
-        cache.set(js['symbol'], Decimal(js['price']))
+        if 'tickers' in js and len(js['tickers']) >0:
+            cache.set("ETHUSDT", Decimal(js['tickers'][0]['last']))
     resp.close()
 
 
@@ -38,7 +38,6 @@ def retrieve_token(sess: Session):
     token_df = fetch_token(last_index)
     if token_df is not None and not token_df.empty:
         df_idx = token_df.index
-        sess.begin()
         try:
             for i in df_idx:
                 name = token_df['tokens_name'][i]
@@ -72,7 +71,6 @@ def retrieve_trade(sess: Session):
     trade_df = fetch_trade(index=last_index)
     if trade_df is not None and not trade_df.empty:
         df_idx = trade_df.index
-        sess.begin()
         try:
             for i in df_idx:
                 # print(df['tokens_id'][i])
@@ -87,9 +85,11 @@ def retrieve_trade(sess: Session):
                     eth_amount=eth_amount,
                     amount=amount,
                     price=eth_amount/amount,
+                    last_price=eth_num(trade_df['tokenTrades_price'][i]),
                     is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 1,
                     aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
-                    eth_price=cache.get("ETHUSDT")
+                    eth_price=cache.get("ETHUSDT"),
+                    ctime=i.to_pydatetime()
                             )
                 sess.add(trade)
             sess.commit()

@@ -64,6 +64,7 @@ class Trade(Base):
     id = Column(String)
     index_id = Column(Integer, nullable=False)
     token_address = Column(String, nullable=False)
+    last_price = Column(DECIMAL(36,18), nullable=False)
     trader = Column(String, nullable=False)
     eth_amount = Column(DECIMAL(36,18), nullable=False, server_default=text("0.0000"))
     amount = Column(DECIMAL(36,18), nullable=False, server_default=text("0.0000"))
