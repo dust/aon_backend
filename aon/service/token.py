@@ -1,5 +1,8 @@
-import re
+from datetime import datetime, timedelta
+from decimal import Decimal
 import logging
+
+from sqlalchemy import text, func, union_all
 
 from aon.code import ResponseCode
 from aon.response import ResMsg
@@ -111,7 +114,24 @@ def ticker_24h(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     
-    d = {'volume': 20044, 'price': 0.00015, 'change':0.00003, 'percentage':"-0.03"}
+    end = datetime.now()
+    begin = datetime.now() - timedelta(days=1)
+    d = {'volume': 0, 'price': 0.0000, 'change':0.00000, 'percentage':"0.00"}
+    try:
+        first_open = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.asc()).limit(1).scalar()
+        last_close = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.desc()).limit(1).scalar()
+        sum_amount = db.session.query(func.sum(Trade.amount)).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).limit(1).scalar()
+        last_price = db.session.query(Trade.last_price).filter(Trade.token_address==token).order_by(Trade.ctime.desc()).limit(1).scalar()
+        logger.info(f"first_open:{first_open}, last_close:{last_close}, sum_amount:{sum_amount}, last_price:{last_price}, d:{d}")
+        d.update({
+            'change': last_close - first_open if last_close else Decimal(0),
+            'percentage': Decimal(0) if last_close is None or first_open == Decimal(0) else (last_close - first_open)/first_open,
+            'volume': sum_amount if sum_amount else Decimal(0),
+            'price': last_price if last_price else Decimal(0)
+        })
+        logger.info(f"222first_open:{first_open}, last_close:{last_close}, sum_amount:{sum_amount}, last_price:{last_price}, d:{d}")
+    except Exception as ex:
+        logger.error(f"{ex}")
     res = ResMsg(data=d)
     return res.data
 
