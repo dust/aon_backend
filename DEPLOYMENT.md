@@ -6,7 +6,9 @@
 #### python 3.10+
 
 ## code
+``` shell
 git clone git@github.com:AONAgent/backend.git
+```
 
 ## virtual env
 ``` shell
@@ -32,7 +34,7 @@ python run.py
 * uwsgi
 uwsgi.ini 中相关绝对路径
 
-```
+``` shell
 uwsgi --ini ./uwsgi.ini
 ```
 * nginx
