@@ -2,6 +2,7 @@
 #### supabase
 * Transaction pooler OR Session pooler
 * connection string
+* create table `schema.sql`
 
 #### python 3.10+
 
