@@ -1,7 +1,7 @@
 subgrounds
 # supabase
-# psycopg2-binary
-psycopg2
+psycopg2-binary
+#psycopg2
 Flask==2.2.5
 Flask-SQLAlchemy
 Flask-APScheduler
@@ -9,3 +9,4 @@ Flask-Caching
 flask_cors
 PyYAML
 Requests
+uWSGI
