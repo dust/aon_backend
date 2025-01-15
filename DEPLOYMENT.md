@@ -9,10 +9,12 @@
 git clone git@github.com:AONAgent/backend.git
 
 ## virtual env
+``` shell
 cd backend
 python -m venv .
 source bin/activate
 pip install -r requirements.txt
+```
 
 ## configration
 * conf/config.yaml
