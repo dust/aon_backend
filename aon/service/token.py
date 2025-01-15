@@ -97,7 +97,7 @@ def my_token(request):
     if not my_address:
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
-    (page_no, page_size) = get_page_args(request)
+    (page_no, page_size) = get_page_args(request,def_ps=1440)
     
     rows = db.session.query(Token).filter(Token.creator==my_address).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)

@@ -57,7 +57,7 @@ def gen_token_kline_1min(sess:Session, token: str):
     df = pd.DataFrame(
         [
             {
-                "price": np.float64(row.price),
+                "price": np.float64(row.last_price),
                 "volume": np.float64(row.amount),
                 "eth_vol": np.float64(row.eth_amount),
                 "ctime": row.ctime,
