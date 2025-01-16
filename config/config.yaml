@@ -21,13 +21,11 @@ COMMON: &common #标识
   # 响应消息
   RESPONSE_MESSAGE: ./config/msg.yaml
 
-  # redis配置
-  #REDIS_EXPIRE: 60*60
-  #REDIS_HOST: 127.0.0.1
-  #REDIS_HOST: 148.153.96.148
-  #REDIS_PASSWORD: o0D$ndQAdIzoXwkEE
-  #REDIS_PORT: 6379
-  #REDIS_DB: 1
+  # upload
+  UPLOAD_FOLDER : 'static/uploads'
+  ALLOWED_EXTENSIONS: ['png', 'jpg', 'jpeg', 'gif']
+  MAX_CONTENT_LENGTH: 10485760
+  UPLOAD_FILE_URL: https://www.baidu.com/images/
 
   # 是否开启定时任务,默认不开启
   SCHEDULER_OPEN: True

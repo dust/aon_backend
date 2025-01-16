@@ -9,4 +9,5 @@ Flask-Caching
 flask_cors
 PyYAML
 Requests
+Werkzeug
 uWSGI

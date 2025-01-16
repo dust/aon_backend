@@ -12,7 +12,6 @@ digest_router = Blueprint("digest", __name__, url_prefix='/digest')
 @digest_router.route("/ethPrice", methods=["GET"])
 @cache.cached(timeout=30)
 def eth_price():
-    print("cache.cached:",cache.get("ETHUSDT") )
     resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
