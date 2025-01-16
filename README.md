@@ -325,3 +325,19 @@ curl -X GET -H "Content-Type: application/json" "http://127.0.0.1:8080/digest/et
   "msg": "success"
 }
 ```
+
+### upload
+* request
+``` shell
+curl -X POST -F "file=@/Users/dustlee/Downloads/wise_1018_5.png" http://127.0.0.1:8080/upload/image
+```
+
+* response
+``` json
+{
+  "code": 0,
+  "data": "https://www.baidu.com/images/34514f93ee001d30.png",
+  "lang": "en",
+  "msg": "success"
+}
+```
