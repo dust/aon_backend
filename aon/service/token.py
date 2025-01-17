@@ -66,15 +66,22 @@ def add_agent_key(request):
             cover = data['cover']
             title = data['title']
             url = data['url']
-            related_token = RelatedToken(
-                token_address=token,
-                app_key = app_key,
-                app_icon = icon,
-                app_cover = cover,
-                app_title= title,
-                app_url = url
-            )
-            db.session.add(related_token)
+            related_token = db.session.query(RelatedToken).filter(RelatedToken.token_address==token, RelatedToken.app_key==app_key).first()
+            if related_token:
+                related_token.app_icon = icon
+                related_token.app_cover =cover
+                related_token.app_title = title
+                related_token.app_url = url
+            else:
+                related_token = RelatedToken(
+                    token_address=token,
+                    app_key = app_key,
+                    app_icon = icon,
+                    app_cover = cover,
+                    app_title= title,
+                    app_url = url
+                )
+                db.session.add(related_token)
             db.session.commit()
             res.update(data=data)
             return res.data
