@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import logging
 
-from sqlalchemy import text, func, union_all
+from sqlalchemy import text, func
+import requests
 
 from aon.code import ResponseCode
 from aon.response import ResMsg
 from aon.core import db
-from aon.model import Token, Trade, Kline, ListedToken
+from aon.model import Token, Trade, Kline, ListedToken, RelatedToken
 from aon.graph import fetch_top_holder
 from aon.service.job import eth_num
 
@@ -43,6 +44,56 @@ def create_token(request):
     db.session.add(t)
     db.session.commit()
     return res.data
+
+def add_agent_key(request):
+    app_key = request.json.get("appKey", "")
+    token = request.json.get("token", "")
+    res = ResMsg()
+
+    if not app_key or not token:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+    
+    resp = requests.get(f"https://api.iaon.ai/functions/v1/app/{app_key}", headers={'accept': "application/json"})
+    '''
+    {"code":200,"message":"","data":{"icon":"","cover":"","title":"school-uniform-app-373","url":"https://school-uniform-app-373.aonmesh.ai"}}
+    '''
+    if resp.status_code == 200:
+        js = resp.json()
+        if js['code'] == 200:
+            data = js['data']
+            icon = data['icon']
+            cover = data['cover']
+            title = data['title']
+            url = data['url']
+            related_token = RelatedToken(
+                token_address=token,
+                app_key = app_key,
+                app_icon = icon,
+                app_cover = cover,
+                app_title= title,
+                app_url = url
+            )
+            db.session.add(related_token)
+            db.session.commit()
+            res.update(data=data)
+            return res.data
+
+    res.update(code=ResponseCode.NoResourceFound)
+    return res.data
+
+def related_app(request):
+    token = request.args.get("token")
+    res = ResMsg()
+
+    if not token:
+        res.update(code=ResponseCode.InvalidParameter)
+        return res.data
+
+    related_apps = db.session.query(RelatedToken).filter(RelatedToken.token_address == token).limit(3).all()
+    res.update(data=related_apps)
+    return res.data
+
 
 def list_token(request):
     (page_no, page_size) = get_page_args(request)

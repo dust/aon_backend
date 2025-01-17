@@ -23,6 +23,17 @@ class Comment(Base):
     created_by = Column(String, nullable=False)
     ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
 
+class RelatedToken(Base):
+    __tablename__ = 'related_token'
+
+    token_address = Column(String, nullable=False, primary_key=True)
+    app_key = Column(String, nullable=False, primary_key=True)
+    app_icon = Column(String, nullable=False)
+    app_cover = Column(String, nullable=False)
+    app_title = Column(String, nullable=False)
+    app_url = Column(String, nullable=False)
+    ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
+
 
 class Token(Base):
     __tablename__ = "token"

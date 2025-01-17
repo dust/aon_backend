@@ -7,7 +7,7 @@ from flask.json import JSONEncoder as BaseJSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
 
-from aon.model import Token, Comment, Trade, Kline
+from aon.model import Token, Comment, Trade, Kline, RelatedToken
 
 scheduler = APScheduler()
 
@@ -31,6 +31,8 @@ class JSONEncoder(BaseJSONEncoder):
             return JSONEncoder.fmt_trade(o)
         if isinstance(o, Kline):
             return JSONEncoder.fmt_kline(o)
+        if isinstance(o, RelatedToken):
+            return JSONEncoder.fmt_related(o)
         if isinstance(o, datetime.datetime):
             # 格式化时间
             return o.strftime("%Y-%m-%d %H:%M:%S")
@@ -65,6 +67,16 @@ class JSONEncoder(BaseJSONEncoder):
             'token': o.token_address
         }
     
+    @staticmethod
+    def fmt_related(o: RelatedToken):
+        return {
+            'appKey': o.app_key,
+            'appIcon': o.app_icon,
+            'appCover': o.app_cover,
+            'appTitle': o.app_title,
+            'appUrl': o.app_url
+        }
+
     @staticmethod
     def fmt_kline(o: Kline):
         return [

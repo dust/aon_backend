@@ -341,3 +341,40 @@ curl -X POST -F "file=@/Users/dustlee/Downloads/wise_1018_5.png" http://127.0.0.
   "msg": "success"
 }
 ```
+
+### related app
+* request
+``` shell
+curl -X GET -H "Content-Type: application/json" "http://localhost:8080/token/related?token=0x54791a2d86e73b5f24c7921816e9251ca191c3d3"
+```
+* response
+``` json
+{
+  "code": 0,
+  "data": [],
+  "lang": "en",
+  "msg": "success"
+}
+```
+
+### add related app
+* request
+``` shell
+curl -X POST -H "Content-Type: application/json" \
+-d '{"token":"0x54791a2d86e73b5f24c7921816e9251ca191c3d3", "appKey":"8db84188-41d4-4dd3-86fe-fa0f3c193511"}' \
+"http://localhost:8080/token/addAgentId"
+```
+* response
+``` json
+{
+  "code": 0,
+  "data": {
+    "cover": "",
+    "icon": "",
+    "title": "school-uniform-app-373",
+    "url": "https://school-uniform-app-373.aonmesh.ai"
+  },
+  "lang": "en",
+  "msg": "success"
+}
+```

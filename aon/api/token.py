@@ -12,6 +12,14 @@ token_router = Blueprint("token", __name__, url_prefix='/token')
 def create():
     return create_token(request)
 
+@token_router.route("/addAgentId", methods=["POST"])
+def add_agent():
+    return add_agent_key(request)
+
+@token_router.route("/related", methods=["GET"])
+def related_agent():
+    return related_app(request)
+
 @token_router.route("/detail", methods=['GET'])
 def detail():
     return detail_token(request)
