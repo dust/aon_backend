@@ -6,7 +6,7 @@
 ``` shell
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"token":"0x54791a2d86e73b5f24c7921816e9251ca191c3d3", "createdBy":"0xb492192a8793ec8c2c00379a6de6c9dac8f3bc91", "content":"content by 0xb492192a8793ec8c2c00379a6de6c9dac8f3bc91"}' \
+  -d '{"token":"0x54791a2d86e73b5f24c7921816e9251ca191c3d3", "createdBy":"0xb492192a8793ec8c2c00379a6de6c9dac8f3bc91", "avatar":"https://www.baidu.com/logo.png", "content":"content by 0xb492192a8793ec8c2c00379a6de6c9dac8f3bc91"}' \
 http://127.0.0.1:8080/comment/post
 ```
 * response
@@ -361,7 +361,7 @@ curl -X GET -H "Content-Type: application/json" "http://localhost:8080/token/rel
 * request
 ``` shell
 curl -X POST -H "Content-Type: application/json" \
--d '{"token":"0x54791a2d86e73b5f24c7921816e9251ca191c3d3", "appKey":"8db84188-41d4-4dd3-86fe-fa0f3c193511"}' \
+-d '{"token":"0x54791a2d86e73b5f24c7921816e9251ca191c3d3", "appKey":"e1bb29df-9ede-47d8-b15a-ab2080a41c32"}' \
 "http://localhost:8080/token/addAgentId"
 ```
 * response

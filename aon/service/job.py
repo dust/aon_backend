@@ -14,12 +14,13 @@ logger = logging.getLogger(__name__)
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
     # print("my_job:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
-    if resp.status_code == 200:
-        js = resp.json()
-        if 'tickers' in js and len(js['tickers']) >0:
-            cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
-    resp.close()
+    with db.app.app_context():
+        resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
+        if resp.status_code == 200:
+            js = resp.json()
+            if 'tickers' in js and len(js['tickers']) >0:
+                cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
+        resp.close()
 
 
 def eth_num(amt: np.float64):
@@ -27,13 +28,15 @@ def eth_num(amt: np.float64):
 
 @scheduler.task('interval', id='fetch_all', seconds=300, misfire_grace_time=900)
 def fetch_all():
-    sess = init_session()
-    try:
-        retrieve_trade(sess)
-        retrieve_token(sess)
-        gen_kline(sess)
-    finally:
-        sess.close()
+    # sess = init_session()
+    with db.app.app_context():
+        try:
+            retrieve_trade(db.session)
+            retrieve_token(db.session)
+            gen_kline(db.session)
+        finally:
+            pass
+            # sess.close()
 
 def gen_kline(sess: Session):
     tokens = sess.query(Token).order_by(Token.index_id.desc()).all()
