@@ -16,7 +16,7 @@ COMMON: &common #标识
   # 日志配置文件路径
   LOGGING_CONFIG_PATH: ./config/logging.yaml
   # 日志文件存放位置
-  LOGGING_PATH: ./logs
+  LOGGING_PATH: /tmp/logs
 
   # 响应消息
   RESPONSE_MESSAGE: ./config/msg.yaml
