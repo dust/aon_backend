@@ -1,4 +1,4 @@
-version: 2
+version: 1
 disable_existing_loggers: False
 
 # 定义日志输出格式，可以有多种格式输出
