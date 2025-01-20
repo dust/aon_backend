@@ -87,9 +87,10 @@ def scheduler_init(app):
     :param app:
     :return:
     """
+    lock_file_path = '/tmp/scheduler.lock'
     if platform.system() != 'Windows':
         fcntl = __import__("fcntl")
-        f = open('scheduler.lock', 'wb')
+        f = open(lock_file_path, 'wb')
         try:
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             scheduler.init_app(app)
@@ -105,7 +106,7 @@ def scheduler_init(app):
         atexit.register(unlock)
     else:
         msvcrt = __import__('msvcrt')
-        f = open('scheduler.lock', 'wb')
+        f = open(lock_file_path, 'wb')
         try:
             msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
             scheduler.init_app(app)
