@@ -1,4 +1,5 @@
 import atexit
+import re
 import logging
 import logging.config
 import platform
@@ -67,7 +68,13 @@ def read_yaml(config_name, config_path):
     """
     if config_name and config_path:
         with open(config_path, 'r', encoding='utf-8') as f:
-            conf = yaml.safe_load(f.read())
+            content = f.read()
+            def replace_env_vars(match):
+                env_var_name = match.group(1)
+                return os.environ.get(env_var_name, '') # 如果环境变量不存在，则使用空字符串
+
+            interpolated_content = re.sub(r'\${(\w+)}', replace_env_vars, content)
+            conf = yaml.safe_load(interpolated_content)
         if config_name in conf.keys():
             return conf[config_name.upper()]
         else:
