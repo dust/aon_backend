@@ -329,14 +329,20 @@ curl -X GET -H "Content-Type: application/json" "http://127.0.0.1:8080/digest/et
 ### upload
 * request
 ``` shell
-curl -X POST -F "file=@/Users/dustlee/Downloads/wise_1018_5.png" http://127.0.0.1:8080/upload/image
+curl -X POST -F "file=@/Users/dustlee/Downloads/image_2024-12-30_10-49-31.png" http://127.0.0.1:8080/upload/image
 ```
 
 * response
 ``` json
 {
   "code": 0,
-  "data": "https://www.baidu.com/images/34514f93ee001d30.png",
+  "data": {
+    "contentDisposition": "inline; filename=\"b819fecbe7c42391.png\"",
+    "contentType": "image/png",
+    "downloadUrl": "https://5gstp0mseieswdvm.public.blob.vercel-storage.com/static/uploads/b819fecbe7c42391-L61wZF85CM5Jabzne8vbR8vBDzHMnK.png?download=1",
+    "pathname": "static/uploads/b819fecbe7c42391.png",
+    "url": "https://5gstp0mseieswdvm.public.blob.vercel-storage.com/static/uploads/b819fecbe7c42391-L61wZF85CM5Jabzne8vbR8vBDzHMnK.png"
+  },
   "lang": "en",
   "msg": "success"
 }

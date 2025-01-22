@@ -22,10 +22,10 @@ COMMON: &common #标识
   RESPONSE_MESSAGE: ./config/msg.yaml
 
   # upload
-  UPLOAD_FOLDER : 'static/uploads'
+  UPLOAD_FOLDER: /static/uploads
+  BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_5GStp0MSeiEswDVm_qH0bn03Tmxdax04l91dYLBK2t2t78q"
   ALLOWED_EXTENSIONS: ['png', 'jpg', 'jpeg', 'gif']
   MAX_CONTENT_LENGTH: 10485760
-  UPLOAD_FILE_URL: https://www.baidu.com/images/
 
   # 是否开启定时任务,默认不开启
   SCHEDULER_OPEN: True

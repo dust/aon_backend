@@ -11,3 +11,4 @@ PyYAML
 Requests
 Werkzeug
 uWSGI
+vercel_blob

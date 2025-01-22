@@ -12,4 +12,5 @@ class ResponseCode(object):
     SystemError = 40009  # 系统错误
     UserNameRepeat = 40010  # 用户名重复
     UserNameFormatError = 40011  # 用户名格式错误
+    UploadError = 40012 # 上传错误
 
