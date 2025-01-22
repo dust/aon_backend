@@ -23,7 +23,7 @@ COMMON: &common #标识
 
   # upload
   UPLOAD_FOLDER: /static/uploads
-  BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_5GStp0MSeiEswDVm_qH0bn03Tmxdax04l91dYLBK2t2t78q"
+  BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN}
   ALLOWED_EXTENSIONS: ['png', 'jpg', 'jpeg', 'gif']
   MAX_CONTENT_LENGTH: 10485760
 
