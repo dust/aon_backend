@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Column, Integer, String, DECIMAL, SMALLINT
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
 
-SUPABASE_URL = os.environ.get("POSTGRES_URL", "postgresql://postgres.exsligkuvicrfiirsmdg:H2FrhBZv1PRE9sf2@aws-0-eu-central-1.pooler.supabase.com:6543/postgres")
+SUPABASE_URL = os.environ.get("SQLALCHEMY_DATABASE_URI", "postgresql://postgres.exsligkuvicrfiirsmdg:H2FrhBZv1PRE9sf2@aws-0-eu-central-1.pooler.supabase.com:6543/postgres")
 parsed = urllib.parse.urlparse(SUPABASE_URL)
 database_url = f"postgresql://{parsed.username}:{parsed.password}@{parsed.hostname}:{parsed.port}{parsed.path}"
 
