@@ -11,6 +11,9 @@ from aon.core import db, scheduler,cache
 
 logger = logging.getLogger(__name__)
 
+THIRTY_MINS = 30
+STR_THIRTY_MINS = '30min'
+
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
     # print("my_job:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -44,19 +47,14 @@ def gen_kline(sess: Session):
         gen_token_kline_1min(sess, t.contract_address)
 
 def gen_token_kline_1min(sess:Session, token: str):
-    rs = sess.query(Kline.open_ts, Kline.c).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).all()
-    latest_open_ts = None
-    last_close = Decimal(0)
-    if rs and len(rs) > 0:
-        latest_open_ts = rs[0][0]
-        last_close = rs[0][0]
+    latest_open_ts = sess.query(Kline.open_ts).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).scalar()
     if latest_open_ts is None:
         latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
         if latest_open_ts is None:
             # no trade
             return
     else:
-        latest_open_ts = datetime.fromtimestamp(latest_open_ts) + timedelta(minutes=1)
+        latest_open_ts = datetime.fromtimestamp(latest_open_ts) + timedelta(minutes=THIRTY_MINS)
     
     rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
     if rows is None or len(rows) == 0:
@@ -76,7 +74,7 @@ def gen_token_kline_1min(sess:Session, token: str):
     if df.empty:
         return
     df = df.set_index("ctime").sort_index()
-    ohlcv = df.resample('1min').agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
+    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
     # ohlcv = ohlcv.ffill()
     idx = ohlcv.index
     count = 0
@@ -95,7 +93,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                     cnt=0,
                     buy_vol=0,
                     buy_amount=0,
-                    close_ts=(i.to_pydatetime()+timedelta(minutes=1)).timestamp()
+                    close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
                 )
                 sess.add(k)
                 sess.commit()
