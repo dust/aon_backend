@@ -39,9 +39,11 @@ def create_token(request):
         website=request.json.get("website"),
         tg=request.json.get("tg"),
         x=request.json.get("x"),
+        source=1,
         index_id=0
     )
     db.session.add(t)
+    # print(f"t:{t}")
     db.session.commit()
     return res.data
 
@@ -104,7 +106,7 @@ def related_app(request):
 
 def list_token(request):
     (page_no, page_size) = get_page_args(request)
-    rows = db.session.query(Token).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Token).order_by(Token.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 

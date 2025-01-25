@@ -54,6 +54,8 @@ class Token(Base):
     website = Column(String)
     tg = Column(String)
     x = Column(String)
+    source = Column(Integer, nullable=False, server_default=text("0"))
+    ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
     initial_buy = Column(DECIMAL(36,18))
 
     def __repr__(self):
@@ -128,4 +130,6 @@ def makesure_token(sess: Session, token: Token):
         t.holder_cnt = token.holder_cnt
         t.index_id = token.index_id
         t.listed = token.listed
+        t.price = token.price
+        t.aon_fee = token.aon_fee
         sess.flush()
