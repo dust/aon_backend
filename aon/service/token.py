@@ -135,7 +135,7 @@ def kline_item(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     (page_no, page_size) = get_page_args(request,def_ps=1440)
-    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Kline.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Kline.open_ts.asc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 
