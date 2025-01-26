@@ -11,8 +11,8 @@ from aon.core import db, scheduler,cache
 
 logger = logging.getLogger(__name__)
 
-THIRTY_MINS = 30
-STR_THIRTY_MINS = '30min'
+THIRTY_MINS = 1
+STR_THIRTY_MINS = '1min'
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
@@ -54,7 +54,7 @@ def gen_token_kline_1min(sess:Session, token: str):
         latest_open_ts = rs[0][0]
         last_close = rs[0][1]
     if latest_open_ts is None:
-        latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
+        latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.desc()).limit(1).scalar()
         if latest_open_ts is None:
             # no trade
             return
@@ -79,7 +79,7 @@ def gen_token_kline_1min(sess:Session, token: str):
     if df.empty:
         return
     df = df.set_index("ctime").sort_index()
-    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
+    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum', 'cnt': 'count'})
     ohlcv.dropna(inplace=True)
     idx = ohlcv.index
     try:
@@ -106,7 +106,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                 c=Decimal(str(ohlcv['price']['close'][i])),
                 vol=Decimal(str(ohlcv['volume']['volume'][i])),
                 amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
-                cnt=0,
+                cnt=int(str(ohlcv['cnt']['cnt'][i])),
                 buy_vol=0,
                 buy_amount=0,
                 close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()

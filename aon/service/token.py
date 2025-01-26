@@ -106,7 +106,7 @@ def related_app(request):
 
 def list_token(request):
     (page_no, page_size) = get_page_args(request)
-    rows = db.session.query(Token).order_by(Token.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Token).filter_by(Token.source==1).order_by(Token.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 
