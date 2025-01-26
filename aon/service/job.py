@@ -97,23 +97,25 @@ def gen_token_kline_1min(sess:Session, token: str):
                 loc = ohlcv.index.get_loc(i)
                 previous = ohlcv.index[loc - 1]
                 open_price = Decimal(str(ohlcv['price']['close'][previous]))
-            k = Kline(
-                token_address=token,
-                open_ts=i.to_pydatetime().timestamp(),
-                o=open_price,
-                h=Decimal(str(ohlcv['price']['high'][i])),
-                l=Decimal(str(ohlcv['price']['low'][i])),
-                c=Decimal(str(ohlcv['price']['close'][i])),
-                vol=Decimal(str(ohlcv['volume']['volume'][i])),
-                amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
-                cnt=int(str(ohlcv['cnt']['cnt'][i])),
-                buy_vol=0,
-                buy_amount=0,
-                close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
-            )
-            count += 1
-            sess.add(k)
-            sess.commit()
+            v = Decimal(str(ohlcv['volume']['volume'][i]))
+            if v > DECIMAL(0):
+                k = Kline(
+                    token_address=token,
+                    open_ts=i.to_pydatetime().timestamp(),
+                    o=open_price,
+                    h=Decimal(str(ohlcv['price']['high'][i])),
+                    l=Decimal(str(ohlcv['price']['low'][i])),
+                    c=Decimal(str(ohlcv['price']['close'][i])),
+                    vol=v,
+                    amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
+                    cnt=int(str(ohlcv['cnt']['cnt'][i])),
+                    buy_vol=0,
+                    buy_amount=0,
+                    close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
+                )
+                count += 1
+                sess.add(k)
+                sess.commit()
     except Exception as ex:
         sess.rollback()
         logger.error(f"{ex}")
