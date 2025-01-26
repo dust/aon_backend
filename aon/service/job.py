@@ -94,7 +94,9 @@ def gen_token_kline_1min(sess:Session, token: str):
                     open_price = Decimal(str(ohlcv['price']['open'][i]))
             else:
                 # 本批数据中，第n（大于1)成交。
-                open_price = Decimal(str(ohlcv['price']['open'][i-1]))
+                loc = ohlcv.index.get_loc(i)
+                previous = ohlcv.index[loc - 1]
+                open_price = Decimal(str(ohlcv['price']['close'][previous]))
             k = Kline(
                 token_address=token,
                 open_ts=i.to_pydatetime().timestamp(),
