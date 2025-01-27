@@ -176,7 +176,7 @@ def retrieve_trade(sess: Session):
                     amount=amount,
                     price=eth_amount/amount,
                     last_price=eth_num(trade_df['tokenTrades_price'][i]),
-                    is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 1,
+                    is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 0,
                     aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
                     eth_price=SIMPLE_CACHE.get("ETHUSDT"),
                     ctime=i.to_pydatetime()
