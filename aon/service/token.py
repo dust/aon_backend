@@ -39,12 +39,13 @@ def create_token(request):
         website=request.json.get("website"),
         tg=request.json.get("tg"),
         x=request.json.get("x"),
+        initial_buy=request.json.get("initialBuy"),
         source=1,
         index_id=0
     )
     db.session.add(t)
-    # print(f"t:{t}")
     db.session.commit()
+
     return res.data
 
 def add_agent_key(request):
