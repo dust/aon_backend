@@ -31,7 +31,7 @@ def create_token(request):
     t = Token(
         name=request.json.get("name"),
         symbol=symbol,
-        contract_address=request.json.get("contract"),
+        contract_address=request.json.get("contract").lower(),
         image=request.json.get("image"),
         creator=request.json.get("createdBy"),
         tags=request.json.get("tags"),
@@ -56,7 +56,7 @@ def add_agent_key(request):
     if not app_key or not token:
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
-    
+    token = token.lower()
     resp = requests.get(f"https://api.iaon.ai/functions/v1/app/{app_key}", headers={'accept': "application/json"})
     '''
     {"code":200,"message":"","data":{"icon":"","cover":"","title":"school-uniform-app-373","url":"https://school-uniform-app-373.aonmesh.ai"}}
@@ -100,7 +100,7 @@ def related_app(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
 
-    related_apps = db.session.query(RelatedToken).filter(RelatedToken.token_address == token).limit(3).all()
+    related_apps = db.session.query(RelatedToken).filter(RelatedToken.token_address == token.lower()).limit(3).all()
     res.update(data=related_apps)
     return res.data
 
@@ -116,7 +116,7 @@ def detail_token(request):
     if not token:
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
-    t = db.session.query(Token).filter(Token.contract_address == token).one_or_none()
+    t = db.session.query(Token).filter(Token.contract_address == token.lower()).one_or_none()
     res = ResMsg(data=t)
     return res.data
 
@@ -126,7 +126,7 @@ def recent_trade(request):
         res = ResMsg()
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
-    rows = db.session.query(Trade).filter(Trade.token_address == token).order_by(Trade.ctime.desc()).limit(100).all()
+    rows = db.session.query(Trade).filter(Trade.token_address == token.lower()).order_by(Trade.ctime.desc()).limit(100).all()
     res = ResMsg(data=rows)
     return res.data
 
@@ -136,7 +136,7 @@ def kline_item(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     (page_no, page_size) = get_page_args(request,def_ps=1440)
-    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Kline.open_ts.asc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Kline).filter(Kline.token_address == token.lower()).order_by(Kline.open_ts.asc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 
@@ -147,7 +147,7 @@ def top_holder(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     
-    df = fetch_top_holder(token)
+    df = fetch_top_holder(token.lower())
     rows = []
     if df is not None and not df.empty:
         idx = df.index
@@ -163,7 +163,7 @@ def my_token(request):
         return res.data
     (page_no, page_size) = get_page_args(request)
     
-    rows = db.session.query(Token).filter(Token.creator==my_address).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Token).filter(Token.creator==my_address.lower()).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     
     return res.data
@@ -175,6 +175,7 @@ def ticker_24h(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     
+    token = token.lower()
     end = datetime.now()
     begin = datetime.now() - timedelta(days=1)
     d = {'volume': 0, 'price': 0.0000, 'change':0.00000, 'percentage':"0.00"}
