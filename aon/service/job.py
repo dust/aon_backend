@@ -108,7 +108,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                     c=Decimal(str(ohlcv['price']['close'][i])),
                     vol=v,
                     amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
-                    cnt=int(str(ohlcv['cnt']['cnt'][i])),
+                    cnt=0,
                     buy_vol=0,
                     buy_amount=0,
                     close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
