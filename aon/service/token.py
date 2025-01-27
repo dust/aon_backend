@@ -39,9 +39,11 @@ def create_token(request):
         website=request.json.get("website"),
         tg=request.json.get("tg"),
         x=request.json.get("x"),
+        source=1,
         index_id=0
     )
     db.session.add(t)
+    # print(f"t:{t}")
     db.session.commit()
     return res.data
 
@@ -104,7 +106,7 @@ def related_app(request):
 
 def list_token(request):
     (page_no, page_size) = get_page_args(request)
-    rows = db.session.query(Token).order_by(Token.index_id.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Token).filter(Token.source==1).order_by(Token.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 
@@ -133,7 +135,7 @@ def kline_item(request):
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     (page_no, page_size) = get_page_args(request,def_ps=1440)
-    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Kline.ctime.desc()).offset((page_no-1)*page_size).limit(page_size).all()
+    rows = db.session.query(Kline).filter(Kline.token_address == token).order_by(Kline.open_ts.asc()).offset((page_no-1)*page_size).limit(page_size).all()
     res = ResMsg(data=rows)
     return res.data
 

@@ -11,8 +11,8 @@ from aon.core import db, scheduler,cache
 
 logger = logging.getLogger(__name__)
 
-THIRTY_MINS = 30
-STR_THIRTY_MINS = '30min'
+THIRTY_MINS = 1
+STR_THIRTY_MINS = '1min'
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
@@ -47,7 +47,12 @@ def gen_kline(sess: Session):
         gen_token_kline_1min(sess, t.contract_address)
 
 def gen_token_kline_1min(sess:Session, token: str):
-    latest_open_ts = sess.query(Kline.open_ts).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).scalar()
+    last_close = DECIMAL(0)
+    latest_open_ts = None
+    rs = sess.query(Kline.open_ts, Kline.c).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).all()
+    if rs and len(rs)>0:
+        latest_open_ts = rs[0][0]
+        last_close = rs[0][1]
     if latest_open_ts is None:
         latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
         if latest_open_ts is None:
@@ -74,27 +79,41 @@ def gen_token_kline_1min(sess:Session, token: str):
     if df.empty:
         return
     df = df.set_index("ctime").sort_index()
-    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
-    # ohlcv = ohlcv.ffill()
+    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum', 'cnt': 'count'})
+    ohlcv.dropna(inplace=True)
     idx = ohlcv.index
-    count = 0
     try:
+        count = 0
         for i in idx:
-            if not ohlcv['price']['open'][i].isna() and not ohlcv['price']['close'][i].isna() and not ohlcv['volume']['volume'][i].isna():
+            if count == 0:
+                if last_close > Decimal(0):
+                    # 当前成交之前有成交记录，使用之前的收盘价
+                    open_price = last_close
+                else:
+                    # 第一条成交。
+                    open_price = Decimal(str(ohlcv['price']['open'][i]))
+            else:
+                # 本批数据中，第n（大于1)成交。
+                loc = ohlcv.index.get_loc(i)
+                previous = ohlcv.index[loc - 1]
+                open_price = Decimal(str(ohlcv['price']['close'][previous]))
+            v = Decimal(str(ohlcv['volume']['volume'][i]))
+            if v > DECIMAL(0):
                 k = Kline(
                     token_address=token,
                     open_ts=i.to_pydatetime().timestamp(),
-                    o=Decimal(str(ohlcv['price']['open'][i])),
+                    o=open_price,
                     h=Decimal(str(ohlcv['price']['high'][i])),
                     l=Decimal(str(ohlcv['price']['low'][i])),
                     c=Decimal(str(ohlcv['price']['close'][i])),
-                    vol=Decimal(str(ohlcv['volume']['volume'][i])),
+                    vol=v,
                     amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
-                    cnt=0,
+                    cnt=int(str(ohlcv['cnt']['cnt'][i])),
                     buy_vol=0,
                     buy_amount=0,
                     close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
                 )
+                count += 1
                 sess.add(k)
                 sess.commit()
     except Exception as ex:
