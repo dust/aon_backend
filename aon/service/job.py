@@ -47,7 +47,7 @@ def gen_kline(sess: Session):
         gen_token_kline_1min(sess, t.contract_address)
 
 def gen_token_kline_1min(sess:Session, token: str):
-    last_close = DECIMAL(0)
+    last_close = Decimal(0)
     latest_open_ts = None
     rs = sess.query(Kline.open_ts, Kline.c).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).all()
     if rs and len(rs)>0:
@@ -80,8 +80,8 @@ def gen_token_kline_1min(sess:Session, token: str):
         return
     df = df.set_index("ctime").sort_index()
     ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
-    ohlcv['volume']['volume'].replace(0, np.nan, inplace=True)
-    ohlcv['eth_vol']['eth_vol'].replace(0, np.nan, inplace=True)
+    # ohlcv['volume']['volume'].replace(0, np.nan, inplace=True)
+    # ohlcv['eth_vol']['eth_vol'].replace(0, np.nan, inplace=True)
     ohlcv.dropna(inplace=True)
     idx = ohlcv.index
     try:
