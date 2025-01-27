@@ -44,8 +44,8 @@ def create_token(request):
         index_id=0
     )
     db.session.add(t)
-    # print(f"t:{t}")
     db.session.commit()
+
     return res.data
 
 def add_agent_key(request):
