@@ -98,7 +98,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                 previous = ohlcv.index[loc - 1]
                 open_price = Decimal(str(ohlcv['price']['close'][previous]))
             v = Decimal(str(ohlcv['volume']['volume'][i]))
-            if v > DECIMAL(0):
+            if v > Decimal(0):
                 k = Kline(
                     token_address=token,
                     open_ts=i.to_pydatetime().timestamp(),
