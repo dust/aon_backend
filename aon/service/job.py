@@ -3,33 +3,33 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import requests
+from flask_caching import SimpleCache
 
 from aon.graph import *
 from aon.model import *
-from aon.core import db, scheduler,cache
+from aon.core import db, scheduler
 
 
 logger = logging.getLogger(__name__)
 
 THIRTY_MINS = 1
 STR_THIRTY_MINS = '1min'
+SIMPLE_CACHE = SimpleCache()
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
-    # print("my_job:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    with db.app.app_context():
-        resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
-        if resp.status_code == 200:
-            js = resp.json()
-            if 'tickers' in js and len(js['tickers']) >0:
-                cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
-        resp.close()
-
+    resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
+    if resp.status_code == 200:
+        js = resp.json()
+        if 'tickers' in js and len(js['tickers']) >0:
+            global SIMPLE_CACHE
+            SIMPLE_CACHE.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
+    resp.close()
 
 def eth_num(amt: np.float64):
     return Decimal(str(amt/(10**18)))
 
-@scheduler.task('interval', id='fetch_all', seconds=300, misfire_grace_time=900)
+@scheduler.task('interval', id='fetch_all', seconds=60, misfire_grace_time=900)
 def fetch_all():
     # sess = init_session()
     with db.app.app_context():
@@ -160,6 +160,7 @@ def retrieve_trade(sess: Session):
     trade_df = fetch_trade(index=last_index)
     if trade_df is not None and not trade_df.empty:
         df_idx = trade_df.index
+        global SIMPLE_CACHE
         try:
             for i in df_idx:
                 # print(df['tokens_id'][i])
@@ -177,7 +178,7 @@ def retrieve_trade(sess: Session):
                     last_price=eth_num(trade_df['tokenTrades_price'][i]),
                     is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 1,
                     aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
-                    eth_price=cache.get("ETHUSDT"),
+                    eth_price=SIMPLE_CACHE.get("ETHUSDT"),
                     ctime=i.to_pydatetime()
                             )
                 sess.add(trade)
