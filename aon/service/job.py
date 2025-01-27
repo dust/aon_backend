@@ -51,7 +51,7 @@ def gen_token_kline_1min(sess:Session, token: str):
     latest_open_ts = None
     rs = sess.query(Kline.open_ts, Kline.c).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).all()
     if rs and len(rs)>0:
-        latest_open_ts = rs[0][0]
+        latest_open_ts = datetime.fromtimestamp(rs[0][0])
         last_close = rs[0][1]
     if latest_open_ts is None:
         latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
