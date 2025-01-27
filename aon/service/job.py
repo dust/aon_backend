@@ -79,7 +79,7 @@ def gen_token_kline_1min(sess:Session, token: str):
     if df.empty:
         return
     df = df.set_index("ctime").sort_index()
-    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum', 'cnt': 'count'})
+    ohlcv = df.resample(STR_THIRTY_MINS).agg({'price':'ohlc', 'volume':'sum', 'eth_vol':'sum'})
     ohlcv.dropna(inplace=True)
     idx = ohlcv.index
     try:
