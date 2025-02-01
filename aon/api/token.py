@@ -33,7 +33,7 @@ def make_holer_key():
     return f"/token/holder:{token}"
 
 @token_router.route("/holder", methods=['GET'])
-@cache.cached(timeout=60, make_cache_key=make_holer_key)
+@cache.cached(timeout=11, make_cache_key=make_holer_key)
 def holder():
     return top_holder(request)
 
