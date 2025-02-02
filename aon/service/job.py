@@ -29,7 +29,7 @@ def eth_price():
 def eth_num(amt: np.float64):
     return Decimal(str(amt/(10**18)))
 
-@scheduler.task('interval', id='fetch_all', seconds=13, misfire_grace_time=900)
+@scheduler.task('interval', id='fetch_all', seconds=11, misfire_grace_time=900)
 def fetch_all():
     # sess = init_session()
     with db.app.app_context():
