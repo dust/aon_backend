@@ -29,7 +29,7 @@ def eth_price():
 def eth_num(amt: np.float64):
     return Decimal(str(amt/(10**18)))
 
-@scheduler.task('interval', id='fetch_all', seconds=60, misfire_grace_time=900)
+@scheduler.task('interval', id='fetch_all', seconds=11, misfire_grace_time=900)
 def fetch_all():
     # sess = init_session()
     with db.app.app_context():
@@ -47,20 +47,20 @@ def gen_kline(sess: Session):
         gen_token_kline_1min(sess, t.contract_address)
 
 def gen_token_kline_1min(sess:Session, token: str):
-    last_close = Decimal(0)
-    latest_open_ts = None
-    rs = sess.query(Kline.open_ts, Kline.c).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).all()
-    if rs and len(rs)>0:
-        latest_open_ts = datetime.fromtimestamp(rs[0][0])
-        last_close = rs[0][1]
+    
+    # 最后一根k线的开盘时间
+    latest_open_ts = sess.query(Kline.open_ts).filter(Kline.token_address==token).order_by(Kline.open_ts.desc()).limit(1).scalar()
+    
     if latest_open_ts is None:
+        # kline没有数据，使用第一条的成交数据的时间
         latest_open_ts = sess.query(Trade.ctime).filter(Trade.token_address==token).order_by(Trade.ctime.asc()).limit(1).scalar()
         if latest_open_ts is None:
             # no trade
             return
-    else:
-        latest_open_ts = latest_open_ts + timedelta(minutes=THIRTY_MINS)
+    # else:
+    #     latest_open_ts = latest_open_ts + timedelta(minutes=THIRTY_MINS)
     
+    # latest_open_ts, 为最后一条k线的时间 或 第一条成交数据的时间 之后（含）的所有成交数据。
     rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
     if rows is None or len(rows) == 0:
         return
@@ -87,12 +87,14 @@ def gen_token_kline_1min(sess:Session, token: str):
     try:
         count = 0
         for i in idx:
+            open_ts = i.to_pydatetime().timestamp()
             if count == 0:
-                if last_close > Decimal(0):
+                last_close = sess.query(Kline.c).filter(Kline.token_address==token, Kline.open_ts<open_ts).order_by(Kline.open_ts.desc()).limit(1).scalar()
+                if last_close and last_close > Decimal(0):
                     # 当前成交之前有成交记录，使用之前的收盘价
                     open_price = last_close
                 else:
-                    # 第一条成交。
+                    # 第一条成交记录
                     open_price = Decimal(str(ohlcv['price']['open'][i]))
             else:
                 # 本批数据中，第n（大于1)成交。
@@ -101,23 +103,31 @@ def gen_token_kline_1min(sess:Session, token: str):
                 open_price = Decimal(str(ohlcv['price']['close'][previous]))
             v = Decimal(str(ohlcv['volume']['volume'][i]))
             if v > Decimal(0):
-                k = Kline(
-                    token_address=token,
-                    open_ts=i.to_pydatetime().timestamp(),
-                    o=open_price,
-                    h=Decimal(str(ohlcv['price']['high'][i])),
-                    l=Decimal(str(ohlcv['price']['low'][i])),
-                    c=Decimal(str(ohlcv['price']['close'][i])),
-                    vol=v,
-                    amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
-                    cnt=0,
-                    buy_vol=0,
-                    buy_amount=0,
-                    close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
-                )
-                count += 1
-                sess.add(k)
+                k = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts==open_ts).first()
+                if k is not None:
+                    k.h=Decimal(str(ohlcv['price']['high'][i]))
+                    k.l=Decimal(str(ohlcv['price']['low'][i]))
+                    k.c=Decimal(str(ohlcv['price']['close'][i]))
+                    k.vol = v
+                    k.amount = Decimal(str(ohlcv['eth_vol']['eth_vol'][i]))
+                else:
+                    k = Kline(
+                        token_address=token,
+                        open_ts=open_ts,
+                        o=open_price,
+                        h=Decimal(str(ohlcv['price']['high'][i])),
+                        l=Decimal(str(ohlcv['price']['low'][i])),
+                        c=Decimal(str(ohlcv['price']['close'][i])),
+                        vol=v,
+                        amount=Decimal(str(ohlcv['eth_vol']['eth_vol'][i])),
+                        cnt=0,
+                        buy_vol=0,
+                        buy_amount=0,
+                        close_ts=(i.to_pydatetime()+timedelta(minutes=THIRTY_MINS)).timestamp()
+                    )
+                    sess.add(k)
                 sess.commit()
+                count += 1
     except Exception as ex:
         sess.rollback()
         logger.error(f"{ex}")

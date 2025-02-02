@@ -25,6 +25,6 @@ def make_24h_key():
     return f"/digest/24h:{token}"
 
 @digest_router.route("/24h", methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=make_24h_key)
+@cache.cached(timeout=31, make_cache_key=make_24h_key)
 def token_24h():
     return ticker_24h(request)
