@@ -57,8 +57,9 @@ def gen_token_kline_1min(sess:Session, token: str):
         if latest_open_ts is None:
             # no trade
             return
-    # else:
-    #     latest_open_ts = latest_open_ts + timedelta(minutes=THIRTY_MINS)
+    else:
+        # 从kline的最后一根kline开始，允许重复（因为它会履盖更新)
+        latest_open_ts = datetime.fromtimestamp(latest_open_ts)
     
     # latest_open_ts, 为最后一条k线的时间 或 第一条成交数据的时间 之后（含）的所有成交数据。
     rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
