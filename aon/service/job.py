@@ -1,6 +1,7 @@
 from decimal import Decimal
+import traceback
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
 import requests
@@ -29,7 +30,12 @@ def eth_price():
     resp.close()
 
 def eth_num(amt: np.float64):
-    return Decimal(str(amt/(10**18)))
+    try:
+        # t=type(amt)
+        # print(f"type={t}|amt={amt}")
+        return Decimal(str(amt/(10**18)))
+    except Exception as ex:
+        logger.error(f"eth_num: {amt}, ex:{ex}")
 
 @scheduler.task('interval', id='fetch_all', seconds=11, misfire_grace_time=900)
 def fetch_all():
@@ -48,26 +54,22 @@ def gen_kline(sess: Session):
     for t in tokens:
         gen_token_kline_1min(sess, t.contract_address)
 
-def fill_0sec_trade(trades: List[Trade]):
+def fill_0sec_trade(trades: List[Trade]) -> List[Any]:
     i = 0
-    append_lst = []
+    lst = []
     for t in trades:
+        tt = datetime.fromtimestamp(t.ctime)
         if i > 0:
-            if t.ctime.second > 0:
+            if tt.second > 0:
                 # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
+                new_row = []
                 previous = trades[i-1]
-                append_lst.append(
-                    Trade(
-                        ctime=t.ctime-timedelta(seconds=t.ctime.second),
-                        price=previous.price,
-                        amount=ZERO,
-                        eth_amount=ZERO
-                    )
-                )
+                new_row.extend([tt-timedelta(seconds=tt.second),previous.last_price,ZERO,ZERO])
+                lst.append(new_row)
         i += 1
-    if len(append_lst) > 0:
-        trades.extend(append_lst)
-    return trades
+        lst.append([tt, t.last_price, t.amount, t.eth_amount])
+
+    return lst
 
 
 def gen_token_kline_1min(sess:Session, token: str):
@@ -81,24 +83,21 @@ def gen_token_kline_1min(sess:Session, token: str):
         if latest_open_ts is None:
             # no trade
             return
-    else:
-        # 从kline的最后一根kline开始，允许重复（因为它会履盖更新)
-        latest_open_ts = datetime.fromtimestamp(latest_open_ts)
     
     # latest_open_ts, 为最后一条k线的时间 或 第一条成交数据的时间 之后（含）的所有成交数据。
-    rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
-    if rows is None or len(rows) == 0:
+    trades = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
+    if trades is None or len(trades) == 0:
         return
     
-    rows = fill_0sec_trade(rows)
+    rows = fill_0sec_trade(trades)
     
     df = pd.DataFrame(
         [
             {
-                "price": np.float64(row.last_price),
-                "volume": np.float64(row.amount),
-                "eth_vol": np.float64(row.eth_amount),
-                "ctime": row.ctime,
+                "price": np.float64(row[1]),
+                "volume": np.float64(row[2]),
+                "eth_vol": np.float64(row[3]),
+                "ctime": row[0],
             }
             for row in rows
         ]
@@ -117,7 +116,7 @@ def gen_token_kline_1min(sess:Session, token: str):
             open_ts = i.to_pydatetime().timestamp()
             if count == 0:
                 last_close = sess.query(Kline.c).filter(Kline.token_address==token, Kline.open_ts<open_ts).order_by(Kline.open_ts.desc()).limit(1).scalar()
-                if last_close and last_close > Decimal(0):
+                if last_close and last_close > ZERO:
                     # 当前成交之前有成交记录，使用之前的收盘价
                     open_price = last_close
                 else:
@@ -129,7 +128,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                 previous = ohlcv.index[loc - 1]
                 open_price = Decimal(str(ohlcv['price']['close'][previous]))
             v = Decimal(str(ohlcv['volume']['volume'][i]))
-            if v > Decimal(0):
+            if v > ZERO:
                 k = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts==open_ts).first()
                 if k is not None:
                     k.h=Decimal(str(ohlcv['price']['high'][i]))
@@ -157,7 +156,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                 count += 1
     except Exception as ex:
         sess.rollback()
-        logger.error(f"{ex}")
+        logger.error(f"gen_token_kline_1min: {ex}, {token}")
 
 def retrieve_token(sess: Session):
     last_index = get_token_last_index(sess)
@@ -189,7 +188,7 @@ def retrieve_token(sess: Session):
             sess.commit()
         except Exception as ex:
             sess.rollback()
-            logger.error(f"{ex}")
+            logger.error(f"retrieve_token: {ex}")
 
 
 def retrieve_trade(sess: Session):
@@ -200,26 +199,30 @@ def retrieve_trade(sess: Session):
         global SIMPLE_CACHE
         try:
             for i in df_idx:
-                # print(df['tokens_id'][i])
-                eth_amount = eth_num(trade_df['tokenTrades_ethAmount'][i])
-                amount = eth_num(trade_df['tokenTrades_amount'][i])
-                trade = Trade(
-                    id=trade_df['tokenTrades_id'][i],
-                    tx_id=trade_df['tokenTrades_transHash'][i],
-                    index_id=int(trade_df['tokenTrades_index'][i]),
-                    token_address=trade_df['tokenTrades_token_id'][i],
-                    trader=trade_df['tokenTrades_trader'][i],
-                    eth_amount=eth_amount,
-                    amount=amount,
-                    price=eth_amount/amount,
-                    last_price=eth_num(trade_df['tokenTrades_price'][i]),
-                    is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 0,
-                    aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
-                    eth_price=SIMPLE_CACHE.get("ETHUSDT"),
-                    ctime=i.to_pydatetime()
-                            )
-                sess.add(trade)
+                # print(trade_df['tokenTrades_id'][i], trade_df['tokenTrades_transHash'][i])
+                try:
+                    eth_amount = eth_num(trade_df['tokenTrades_ethAmount'][i])
+                    amount = eth_num(trade_df['tokenTrades_amount'][i])
+                    trade = Trade(
+                        id=trade_df['tokenTrades_id'][i],
+                        tx_id=trade_df['tokenTrades_transHash'][i],
+                        index_id=int(i),
+                        token_address=trade_df['tokenTrades_token_id'][i],
+                        trader=trade_df['tokenTrades_trader'][i],
+                        eth_amount=eth_amount,
+                        amount=amount,
+                        price=eth_amount/amount,
+                        last_price=eth_num(trade_df['tokenTrades_price'][i]),
+                        is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 0,
+                        aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
+                        eth_price=SIMPLE_CACHE.get("ETHUSDT") if SIMPLE_CACHE.get("ETHUSDT") else Decimal("2603.4"),
+                        ctime=int(trade_df['tokenTrades_timestamp'][i])
+                        )
+                    sess.add(trade)
+                except Exception as ex:
+                    traceback.print_exception(ex)
             sess.commit()
         except Exception as ex:
             sess.rollback()
-            logger.error(f"{ex}")
+            traceback.print_exception(ex)
+            logger.error(f"retrieve_trade {ex}")

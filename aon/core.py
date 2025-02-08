@@ -61,7 +61,7 @@ class JSONEncoder(BaseJSONEncoder):
             'qty': o.amount,
             'quoteQty': o.eth_amount,
             'isBuy': True if o.is_buy == 1 else False,
-            'ctime': o.ctime,
+            'ctime': datetime.datetime.fromtimestamp(o.ctime),
             'aonFee': o.aon_fee,
             'ethPrice': o.eth_price,
             'token': o.token_address
