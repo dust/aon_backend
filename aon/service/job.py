@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import datetime, timedelta
+from typing import List
 import numpy as np
 import pandas as pd
 import requests
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 THIRTY_MINS = 1
 STR_THIRTY_MINS = '1min'
 SIMPLE_CACHE = SimpleCache()
+ZERO = Decimal("0")
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
@@ -46,6 +48,28 @@ def gen_kline(sess: Session):
     for t in tokens:
         gen_token_kline_1min(sess, t.contract_address)
 
+def fill_0sec_trade(trades: List[Trade]):
+    i = 0
+    append_lst = []
+    for t in trades:
+        if i > 0:
+            if t.ctime.second > 0:
+                # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
+                previous = trades[i-1]
+                append_lst.append(
+                    Trade(
+                        ctime=t.ctime-timedelta(seconds=t.ctime.second),
+                        price=previous.price,
+                        amount=ZERO,
+                        eth_amount=ZERO
+                    )
+                )
+        i += 1
+    if len(append_lst) > 0:
+        trades.extend(append_lst)
+    return trades
+
+
 def gen_token_kline_1min(sess:Session, token: str):
     
     # 最后一根k线的开盘时间
@@ -65,6 +89,8 @@ def gen_token_kline_1min(sess:Session, token: str):
     rows = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
     if rows is None or len(rows) == 0:
         return
+    
+    rows = fill_0sec_trade(rows)
     
     df = pd.DataFrame(
         [
