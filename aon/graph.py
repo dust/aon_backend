@@ -19,8 +19,7 @@ def fetch_trade(index=0):
     latest = aon.Query.tokenTrades(where=[trade.index > index])
     df = sg.query_df([latest.id, latest.transHash, latest.index, latest.price, latest.amount, latest.ethAmount, latest.aonFee, latest.isBuy, latest.timestamp, latest.trader, latest.token.id])
     if df is not None and not df.empty:
-        df = df.set_index('tokenTrades_timestamp')
-        df.index = pd.to_datetime(df.index, unit='s')
+        df = df.set_index('tokenTrades_index')
     return df
 
 def fetch_listed_token(index=0):

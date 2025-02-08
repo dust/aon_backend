@@ -85,7 +85,7 @@ class Trade(Base):
     is_buy = Column(SMALLINT, nullable=False)
     aon_fee = Column(DECIMAL(36,18))
     eth_price = Column(DECIMAL(36,18), nullable=False, server_default=text("0.0000"))
-    ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
+    ctime = Column(Integer, nullable=False, server_default=text("0"))
 
 class Kline(Base):
     __tablename__ = "kline_1min"
