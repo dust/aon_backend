@@ -59,13 +59,11 @@ def fill_0sec_trade(trades: List[Trade]) -> List[Any]:
     lst = []
     for t in trades:
         tt = datetime.fromtimestamp(t.ctime)
-        if i > 0:
+        if i > 0 and i < len(trades)-1:
             if tt.second > 0:
                 # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
-                new_row = []
                 previous = trades[i-1]
-                new_row.extend([tt-timedelta(seconds=tt.second),previous.last_price,ZERO,ZERO])
-                lst.append(new_row)
+                lst.append([tt-timedelta(seconds=tt.second),previous.last_price,ZERO,ZERO])
         i += 1
         lst.append([tt, t.last_price, t.amount, t.eth_amount])
 
