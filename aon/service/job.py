@@ -59,7 +59,7 @@ def fill_0sec_trade(trades: List[Trade]) -> List[Any]:
     lst = []
     for t in trades:
         tt = datetime.fromtimestamp(t.ctime)
-        if i > 0 and i < len(trades)-1:
+        if i > 0:
             if tt.second > 0:
                 # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
                 previous = trades[i-1]
@@ -121,10 +121,7 @@ def gen_token_kline_1min(sess:Session, token: str):
                     # 第一条成交记录
                     open_price = Decimal(str(ohlcv['price']['open'][i]))
             else:
-                # 本批数据中，第n（大于1)成交。
-                loc = ohlcv.index.get_loc(i)
-                previous = ohlcv.index[loc - 1]
-                open_price = Decimal(str(ohlcv['price']['close'][previous]))
+                open_price = Decimal(str(ohlcv['price']['open'][i]))
             v = Decimal(str(ohlcv['volume']['volume'][i]))
             if v > ZERO:
                 k = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts==open_ts).first()
