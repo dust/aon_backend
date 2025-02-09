@@ -37,7 +37,7 @@ def eth_num(amt: np.float64):
     except Exception as ex:
         logger.error(f"eth_num: {amt}, ex:{ex}")
 
-@scheduler.task('interval', id='fetch_all', seconds=11, misfire_grace_time=900)
+@scheduler.task('interval', id='fetch_all', seconds=23, misfire_grace_time=900)
 def fetch_all():
     # sess = init_session()
     with db.app.app_context():
@@ -121,7 +121,6 @@ def gen_token_kline_1min(sess:Session, token: str):
     ohlcv.dropna(inplace=True)
     idx = ohlcv.index
     try:
-        count = 0
         for i in idx:
             open_ts = i.to_pydatetime().timestamp()
             open_price = Decimal(str(ohlcv['price']['open'][i]))
@@ -151,7 +150,6 @@ def gen_token_kline_1min(sess:Session, token: str):
                     )
                     sess.add(k)
                 sess.commit()
-                count += 1
     except Exception as ex:
         sess.rollback()
         logger.error(f"gen_token_kline_1min: {ex}, {token}")
