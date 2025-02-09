@@ -90,7 +90,8 @@ class JSONEncoder(BaseJSONEncoder):
             o.amount,
             o.cnt,
             o.buy_vol,
-            o.buy_amount
+            o.buy_amount,
+            (o.c - o.o)/o.o
         ]
 
     @staticmethod
