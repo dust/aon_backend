@@ -54,12 +54,24 @@ def gen_kline(sess: Session):
     for t in tokens:
         gen_token_kline_1min(sess, t.contract_address)
 
-def fill_0sec_trade(trades: List[Trade]) -> List[Any]:
+def fill_0sec_trade(sess: Session, token:str, trades: List[Trade]) -> List[Any]:
     i = 0
     lst = []
     for t in trades:
         tt = datetime.fromtimestamp(t.ctime)
-        if i > 0 and i < len(trades)-1:
+        if i == 0:
+            open_ts = tt-timedelta(seconds=tt.second)
+            last_kline = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts<=open_ts.timestamp()).order_by(Kline.open_ts.desc()).limit(1).first()
+            if last_kline is None:
+                # 第一条成交记录
+                lst.append([open_ts, Decimal("0.0000000016"), ZERO, ZERO])
+            elif last_kline.open_ts == open_ts.timestamp():
+                # 同一周期内重复产生kline， 仍然使用周期内开盘价
+                lst.append([open_ts, last_kline.o, ZERO, ZERO])
+            else:
+                # 本周期以前，使用上周期收盘价
+                lst.append([open_ts, last_kline.c, ZERO, ZERO])
+        else:
             if tt.second > 0:
                 # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
                 previous = trades[i-1]
@@ -82,12 +94,12 @@ def gen_token_kline_1min(sess:Session, token: str):
             # no trade
             return
     
-    # latest_open_ts, 为最后一条k线的时间 或 第一条成交数据的时间 之后（含）的所有成交数据。
+    # 查询最后一条k线的时间 或 第一条成交数据的时间 之后（含）的所有成交数据。
     trades = sess.query(Trade).filter(Trade.token_address == token, Trade.ctime>=latest_open_ts).order_by(Trade.ctime.asc()).all()
     if trades is None or len(trades) == 0:
         return
     
-    rows = fill_0sec_trade(trades)
+    rows = fill_0sec_trade(sess, token, trades)
     
     df = pd.DataFrame(
         [
@@ -112,19 +124,7 @@ def gen_token_kline_1min(sess:Session, token: str):
         count = 0
         for i in idx:
             open_ts = i.to_pydatetime().timestamp()
-            if count == 0:
-                last_close = sess.query(Kline.c).filter(Kline.token_address==token, Kline.open_ts<open_ts).order_by(Kline.open_ts.desc()).limit(1).scalar()
-                if last_close and last_close > ZERO:
-                    # 当前成交之前有成交记录，使用之前的收盘价
-                    open_price = last_close
-                else:
-                    # 第一条成交记录
-                    open_price = Decimal(str(ohlcv['price']['open'][i]))
-            else:
-                # 本批数据中，第n（大于1)成交。
-                loc = ohlcv.index.get_loc(i)
-                previous = ohlcv.index[loc - 1]
-                open_price = Decimal(str(ohlcv['price']['close'][previous]))
+            open_price = Decimal(str(ohlcv['price']['open'][i]))
             v = Decimal(str(ohlcv['volume']['volume'][i]))
             if v > ZERO:
                 k = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts==open_ts).first()
