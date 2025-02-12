@@ -37,7 +37,7 @@ def eth_num(amt: np.float64):
     except Exception as ex:
         logger.error(f"eth_num: {amt}, ex:{ex}")
 
-@scheduler.task('interval', id='fetch_all', seconds=23, misfire_grace_time=900)
+@scheduler.task('interval', id='fetch_all', seconds=59, misfire_grace_time=900)
 def fetch_all():
     # sess = init_session()
     with db.app.app_context():
@@ -59,25 +59,26 @@ def fill_0sec_trade(sess: Session, token:str, trades: List[Trade]) -> List[Any]:
     lst = []
     for t in trades:
         tt = datetime.fromtimestamp(t.ctime)
+        eth_price = t.eth_price
         if i == 0:
             open_ts = tt-timedelta(seconds=tt.second)
             last_kline = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts<=open_ts.timestamp()).order_by(Kline.open_ts.desc()).limit(1).first()
             if last_kline is None:
                 # 第一条成交记录
-                lst.append([open_ts, Decimal("0.0000000016"), ZERO, ZERO])
+                lst.append([open_ts, Decimal("0.0000000016")*eth_price, ZERO, ZERO])
             elif last_kline.open_ts == open_ts.timestamp():
                 # 同一周期内重复产生kline， 仍然使用周期内开盘价
-                lst.append([open_ts, last_kline.o, ZERO, ZERO])
+                lst.append([open_ts, last_kline.o*eth_price, ZERO, ZERO])
             else:
                 # 本周期以前，使用上周期收盘价
-                lst.append([open_ts, last_kline.c, ZERO, ZERO])
+                lst.append([open_ts, last_kline.c*eth_price, ZERO, ZERO])
         else:
             if tt.second > 0:
                 # 不是当前周期（分钟)的第0秒, 追加当前周期（分钟）的第一秒
                 previous = trades[i-1]
-                lst.append([tt-timedelta(seconds=tt.second),previous.last_price,ZERO,ZERO])
+                lst.append([tt-timedelta(seconds=tt.second),previous.last_price*eth_price,ZERO,ZERO])
         i += 1
-        lst.append([tt, t.last_price, t.amount, t.eth_amount])
+        lst.append([tt, t.last_price*eth_price, t.amount, t.eth_amount])
 
     return lst
 
