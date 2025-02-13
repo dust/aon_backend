@@ -146,12 +146,28 @@ def top_holder(request):
         res = ResMsg()
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
+    t = db.session.query(Token).filter(Token.contract_address == token.lower()).one_or_none()
     
     df = fetch_top_holder(token.lower())
     rows = []
     if df is not None and not df.empty:
         idx = df.index
         rows = [{'holder': df['tokenHolders_holder'][i], 'amount':eth_num(df['tokenHolders_amount'][i]), 'id':df['tokenHolders_id'][i]} for i in idx]
+    
+    owner = dev = None
+    for row in rows:
+        if row['holder'] == t.creator:
+            dev = row
+            rows.remove(row)
+        elif row['holder'] == t.contract_address:
+            owner = row
+            rows.remove(row)
+
+    rows.sort(key= lambda x : x['amount'], reverse=False)
+    if dev is not None:
+        rows.insert(0, dev)
+    if owner is not None:
+        rows.insert(0, owner)
     res = ResMsg(data=rows)
     return res.data
 
@@ -180,9 +196,9 @@ def ticker_24h(request):
     begin = datetime.now() - timedelta(days=1)
     d = {'volume': 0, 'price': 0.0000, 'change':0.00000, 'percentage':"0.00"}
     try:
-        first_open = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).order_by(Trade.ctime.asc()).limit(1).scalar()
-        last_close = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).order_by(Trade.ctime.desc()).limit(1).scalar()
-        sum_amount = db.session.query(func.sum(Trade.amount)).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).limit(1).scalar()
+        first_open = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.asc()).limit(1).scalar()
+        last_close = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.desc()).limit(1).scalar()
+        sum_amount = db.session.query(func.sum(Trade.eth_amount)).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).limit(1).scalar()
         last_price = db.session.query(Trade.last_price).filter(Trade.token_address==token).order_by(Trade.ctime.desc()).limit(1).scalar()
         
         d.update({
