@@ -21,12 +21,15 @@ ZERO = Decimal("0")
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
-    resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
+    # resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
+    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT", headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
-        if 'tickers' in js and len(js['tickers']) >0:
+        # if 'tickers' in js and len(js['tickers']) >0:
+        if 'price' in js:
             global SIMPLE_CACHE
-            SIMPLE_CACHE.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
+            # SIMPLE_CACHE.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
+            SIMPLE_CACHE.set("BNBUSDT", Decimal(str(js['price'])), 0)
     resp.close()
 
 def eth_num(amt: np.float64):
@@ -65,7 +68,7 @@ def fill_0sec_trade(sess: Session, token:str, trades: List[Trade]) -> List[Any]:
             last_kline = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts<=open_ts.timestamp()).order_by(Kline.open_ts.desc()).limit(1).first()
             if last_kline is None:
                 # 第一条成交记录
-                lst.append([open_ts, Decimal("0.0000000016"), ZERO, ZERO])
+                lst.append([open_ts, Decimal("0.0000000001"), ZERO, ZERO])
             elif last_kline.open_ts == open_ts.timestamp():
                 # 同一周期内重复产生kline， 仍然使用周期内开盘价
                 lst.append([open_ts, last_kline.o, ZERO, ZERO])

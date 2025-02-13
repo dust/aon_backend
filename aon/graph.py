@@ -1,7 +1,8 @@
 from subgrounds import Subgrounds
 import pandas as pd
 
-AON_SUBGRAPH_ENDPOINT = "https://api.studio.thegraph.com/query/76695/aon/version/latest"
+# AON_SUBGRAPH_ENDPOINT = "https://api.studio.thegraph.com/query/76695/aon/version/latest"
+AON_SUBGRAPH_ENDPOINT = "https://api.studio.thegraph.com/query/76695/aon-bsc/version/latest"
 
 sg = Subgrounds()
 
