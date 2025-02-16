@@ -156,6 +156,8 @@ def top_holder(request):
     
     owner = dev = None
     for row in rows:
+        if owner is not None and dev is not None:
+            break
         if row['holder'] == t.creator:
             dev = row
             rows.remove(row)
@@ -196,9 +198,9 @@ def ticker_24h(request):
     begin = datetime.now() - timedelta(days=1)
     d = {'volume': 0, 'price': 0.0000, 'change':0.00000, 'percentage':"0.00"}
     try:
-        first_open = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.asc()).limit(1).scalar()
-        last_close = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).order_by(Trade.ctime.desc()).limit(1).scalar()
-        sum_amount = db.session.query(func.sum(Trade.eth_amount)).filter(Trade.token_address==token, Trade.ctime.between(begin, end)).limit(1).scalar()
+        first_open = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).order_by(Trade.ctime.asc()).limit(1).scalar()
+        last_close = db.session.query(Trade.last_price).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).order_by(Trade.ctime.desc()).limit(1).scalar()
+        sum_amount = db.session.query(func.sum(Trade.eth_amount)).filter(Trade.token_address==token, Trade.ctime.between(begin.timestamp(), end.timestamp())).limit(1).scalar()
         last_price = db.session.query(Trade.last_price).filter(Trade.token_address==token).order_by(Trade.ctime.desc()).limit(1).scalar()
         
         d.update({
