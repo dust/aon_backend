@@ -27,6 +27,8 @@ def fetch_listed_token(index=0):
     list_token = aon.ListedToken
     latest = aon.Query.listedTokens(where=[list_token.index > index])
     df = sg.query_df([latest.blockNum, latest.id, latest.index, latest.pair, latest.timestamp, latest.token.id])
+    if df is not None and not df.empty:
+        df = df.set_index('listedTokens_index')
     return df
 
 def fetch_top_holder(contract_address):

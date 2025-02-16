@@ -43,6 +43,7 @@ class Token(Base):
     symbol = Column(String, nullable=False)
     price = Column(DECIMAL(36,18), nullable=False, server_default=text("0.0000"))
     index_id = Column(Integer, nullable=False, server_default=text("0"))
+    listed_index_id = Column(Integer, nullable=False, server_default=text("0"))
     listed = Column(SMALLINT, nullable=False, server_default=text("0"))
     pair_contract = Column(String)
     creator = Column(String, nullable=False)
@@ -60,15 +61,6 @@ class Token(Base):
 
     def __repr__(self):
         return f"<Token({self.symbol}, ('{self.name}'))>"
-
-class ListedToken(Base):
-    __tablename__ = "listed_token"
-
-    contract_address = Column(String, nullable=False, primary_key=True)
-    block_num = Column(Integer, nullable=False, server_default=text("0"))
-    index_id = Column(Integer, nullable=False, server_default=text("0"))
-    pair = Column(String, nullable=False)
-    ctime = Column(TIMESTAMP, nullable=False, server_default=text("current_timestamp"))
 
 class Trade(Base):
     __tablename__ = "trade"
@@ -119,7 +111,7 @@ def get_token_last_index(sess: Session):
     return latest_index if latest_index else 0
 
 def get_listed_token_last_index(sess: Session):
-    latest_index = sess.query(ListedToken.index_id).order_by(ListedToken.index_id.desc()).limit(1).scalar()
+    latest_index = sess.query(Token.listed_index_id).order_by(Token.listed_index_id.desc()).limit(1).scalar()
     return latest_index if latest_index else 0
 
 def makesure_token(sess: Session, token: Token):
@@ -132,4 +124,12 @@ def makesure_token(sess: Session, token: Token):
         t.listed = token.listed
         t.price = token.price
         t.aon_fee = token.aon_fee
+        sess.flush()
+
+def makesure_listed_token(sess: Session, contract_address:str, pair:str, listed_index_id:int):
+    t = sess.query(Token).filter(Token.contract_address ==contract_address).first()
+    if t is not None:
+        t.pair_contract = pair
+        t.listed = 1
+        t.listed_index_id = listed_index_id
         sess.flush()

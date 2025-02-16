@@ -8,7 +8,7 @@ import requests
 from aon.code import ResponseCode
 from aon.response import ResMsg
 from aon.core import db
-from aon.model import Token, Trade, Kline, ListedToken, RelatedToken
+from aon.model import Token, Trade, Kline, RelatedToken
 from aon.graph import fetch_top_holder
 from aon.service.job import eth_num
 

@@ -50,6 +50,7 @@ def fetch_all():
         try:
             retrieve_trade(db.session)
             retrieve_token(db.session)
+            retrieve_listed(db.session)
             gen_kline(db.session)
         finally:
             pass
@@ -160,6 +161,29 @@ def gen_token_kline_1min(sess:Session, token: str):
     except Exception as ex:
         sess.rollback()
         logger.error(f"gen_token_kline_1min: {ex}, {token}")
+
+def retrieve_listed(sess: Session):
+    last_index = get_listed_token_last_index(sess)
+    listed_df = fetch_listed_token(last_index)
+    if listed_df is not None and not listed_df.empty:
+        df_idx = listed_df.index
+        try:
+            for i in df_idx:
+                pair = listed_df['listedTokens_pair'][i]
+                contract_address = listed_df['listedTokens_token_id'][i]
+                index_id = int(i)
+                # blk_num = listed_df['listedTokens_blockNum'][i]
+                # ts = datetime.datetime.fromtimestamp(listed_df['listedTokens_timestamp'][i])
+                makesure_listed_token(sess, contract_address, pair, index_id)
+            sess.commit()
+        except Exception as ex:
+            sess.rollback()
+            traceback.print_exception(ex)
+            logger.error(f"retrieve_listed: {ex}")
+
+
+
+
 
 def retrieve_token(sess: Session):
     last_index = get_token_last_index(sess)
