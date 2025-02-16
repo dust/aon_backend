@@ -22,15 +22,17 @@ QUOTE_SYMBOL="BNBUSDT"
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
-    # resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
-    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
+    resp = requests.get("https://api.coingecko.com/api/v3/coins/binancecoin/tickers",headers={'accept': "application/json"})
+    # resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
-        # if 'tickers' in js and len(js['tickers']) >0:
-        if 'price' in js:
-            global SIMPLE_CACHE
-            # SIMPLE_CACHE.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
-            SIMPLE_CACHE.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
+        if 'tickers' in js and len(js['tickers']) >0:
+        # if 'price' in js:
+            for ticker in js['tickers']:
+                if ticker['target']=='USDT':
+                    global SIMPLE_CACHE
+                    SIMPLE_CACHE.set(QUOTE_SYMBOL, Decimal(str(ticker['last'])), 0)
+            # SIMPLE_CACHE.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
     resp.close()
 
 def eth_num(amt: np.float64):

@@ -13,11 +13,17 @@ digest_router = Blueprint("digest", __name__, url_prefix='/digest')
 @cache.cached(timeout=30)
 def eth_price():
     QUOTE_SYMBOL = "BNBUSDT"
-    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
+    resp = requests.get("https://api.coingecko.com/api/v3/coins/binancecoin/tickers",headers={'accept': "application/json"})
+    # resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
-        if 'price' in js:
-            cache.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
+        #if 'price' in js:
+        if 'tickers' in js and len(js['tickers']) >0:
+            for ticker in js['tickers']:
+                if ticker['target']=='USDT':
+                    #cache.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
+                    cache.set(QUOTE_SYMBOL, Decimal(str(ticker['last'])), 0)
+    
     res = ResMsg(data=cache.get(QUOTE_SYMBOL))
     return res.data
 
