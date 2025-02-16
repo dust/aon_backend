@@ -12,12 +12,13 @@ digest_router = Blueprint("digest", __name__, url_prefix='/digest')
 @digest_router.route("/ethPrice", methods=["GET"])
 @cache.cached(timeout=30)
 def eth_price():
-    resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
+    QUOTE_SYMBOL = "BNBUSDT"
+    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
-        if 'tickers' in js and len(js['tickers']) >0:
-            cache.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
-    res = ResMsg(data=cache.get("ETHUSDT"))
+        if 'price' in js:
+            cache.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
+    res = ResMsg(data=cache.get(QUOTE_SYMBOL))
     return res.data
 
 def make_24h_key():

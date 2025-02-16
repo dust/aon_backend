@@ -18,18 +18,19 @@ THIRTY_MINS = 1
 STR_THIRTY_MINS = '1min'
 SIMPLE_CACHE = SimpleCache()
 ZERO = Decimal("0")
+QUOTE_SYMBOL="BNBUSDT"
 
 @scheduler.task('interval', id='eth_price_job', seconds=30, misfire_grace_time=900)
 def eth_price():
     # resp = requests.get("https://api.coingecko.com/api/v3/coins/ethereum/tickers",headers={'accept': "application/json"})
-    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT", headers={'accept': "application/json"})
+    resp = requests.get("https://api.binance.com/api/v3/ticker/price?symbol="+QUOTE_SYMBOL, headers={'accept': "application/json"})
     if resp.status_code == 200:
         js = resp.json()
         # if 'tickers' in js and len(js['tickers']) >0:
         if 'price' in js:
             global SIMPLE_CACHE
             # SIMPLE_CACHE.set("ETHUSDT", Decimal(str(js['tickers'][0]['last'])), 0)
-            SIMPLE_CACHE.set("BNBUSDT", Decimal(str(js['price'])), 0)
+            SIMPLE_CACHE.set(QUOTE_SYMBOL, Decimal(str(js['price'])), 0)
     resp.close()
 
 def eth_num(amt: np.float64):
@@ -215,7 +216,7 @@ def retrieve_trade(sess: Session):
                         last_price=eth_num(trade_df['tokenTrades_price'][i]),
                         is_buy=1 if trade_df['tokenTrades_isBuy'][i] else 0,
                         aon_fee=eth_num(trade_df['tokenTrades_aonFee'][i]),
-                        eth_price=SIMPLE_CACHE.get("ETHUSDT") if SIMPLE_CACHE.get("ETHUSDT") else Decimal("2603.4"),
+                        eth_price=SIMPLE_CACHE.get(QUOTE_SYMBOL) if SIMPLE_CACHE.get(QUOTE_SYMBOL) else Decimal("690.4"),
                         ctime=int(trade_df['tokenTrades_timestamp'][i])
                         )
                     sess.add(trade)
