@@ -173,8 +173,8 @@ def retrieve_listed(sess: Session):
                 contract_address = listed_df['listedTokens_token_id'][i]
                 index_id = int(i)
                 # blk_num = listed_df['listedTokens_blockNum'][i]
-                # ts = datetime.datetime.fromtimestamp(listed_df['listedTokens_timestamp'][i])
-                makesure_listed_token(sess, contract_address, pair, index_id)
+                ts = datetime.datetime.fromtimestamp(listed_df['listedTokens_timestamp'][i])
+                makesure_listed_token(sess, contract_address, pair, index_id, ts)
             sess.commit()
         except Exception as ex:
             sess.rollback()

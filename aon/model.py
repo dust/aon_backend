@@ -45,6 +45,7 @@ class Token(Base):
     index_id = Column(Integer, nullable=False, server_default=text("0"))
     listed_index_id = Column(Integer, nullable=False, server_default=text("0"))
     listed = Column(SMALLINT, nullable=False, server_default=text("0"))
+    listed_ctime = Column(TIMESTAMP, nullable=True)
     pair_contract = Column(String)
     creator = Column(String, nullable=False)
     aon_fee = Column(DECIMAL(36,18), server_default=text("0"))
@@ -126,10 +127,11 @@ def makesure_token(sess: Session, token: Token):
         t.aon_fee = token.aon_fee
         sess.flush()
 
-def makesure_listed_token(sess: Session, contract_address:str, pair:str, listed_index_id:int):
+def makesure_listed_token(sess: Session, contract_address:str, pair:str, listed_index_id:int, ts):
     t = sess.query(Token).filter(Token.contract_address ==contract_address).first()
     if t is not None:
         t.pair_contract = pair
         t.listed = 1
         t.listed_index_id = listed_index_id
+        t.listed_ctime = ts
         sess.flush()

@@ -118,6 +118,8 @@ class JSONEncoder(BaseJSONEncoder):
             'holderCnt': o.holder_cnt
         }
         dynamic_fields = []
+        if o.listed_ctime:
+            dynamic_fields.append("listedCtime", o.listed_ctime)
         if o.pair_contract:
             dynamic_fields.append(("pair", o.pair_contract))
         if o.image:
