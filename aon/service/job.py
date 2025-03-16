@@ -72,7 +72,7 @@ def fill_0sec_trade(sess: Session, token:str, trades: List[Trade]) -> List[Any]:
             last_kline = sess.query(Kline).filter(Kline.token_address==token, Kline.open_ts<=open_ts.timestamp()).order_by(Kline.open_ts.desc()).limit(1).first()
             if last_kline is None:
                 # 第一条成交记录
-                lst.append([open_ts, Decimal("0.0000000001"), ZERO, ZERO])
+                lst.append([open_ts, Decimal("0.000000001"), ZERO, ZERO])
             elif last_kline.open_ts == open_ts.timestamp():
                 # 同一周期内重复产生kline， 仍然使用周期内开盘价
                 lst.append([open_ts, last_kline.o, ZERO, ZERO])
