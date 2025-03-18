@@ -156,16 +156,16 @@ def top_holder(request):
     
     owner = dev = None
     for row in rows:
-        if owner is not None and dev is not None:
-            break
         if row['holder'] == t.creator:
             dev = row
             rows.remove(row)
         elif row['holder'] == t.contract_address:
             owner = row
             rows.remove(row)
+        elif row['amount'] == Decimal("0"):
+            rows.remove(row)
 
-    rows.sort(key= lambda x : x['amount'], reverse=False)
+    rows.sort(key= lambda x : x['amount'], reverse=True)
     if dev is not None:
         rows.insert(0, dev)
     if owner is not None:
