@@ -49,47 +49,32 @@ def create_token(request):
     return res.data
 
 def add_agent_key(request):
-    app_key = request.json.get("appKey", "")
     token = request.json.get("token", "")
+    icon = request.json.get['appimage']
+    title = request.json.get['appname']
+    url = request.json.get['appurl']
+
     res = ResMsg()
 
-    if not app_key or not token:
+    if not token:
         res.update(code=ResponseCode.InvalidParameter)
         return res.data
     token = token.lower()
-    resp = requests.get(f"https://api.iaon.ai/functions/v1/app/{app_key}", headers={'accept': "application/json"})
-    '''
-    {"code":200,"message":"","data":{"icon":"","cover":"","title":"school-uniform-app-373","url":"https://school-uniform-app-373.aonmesh.ai"}}
-    '''
-    if resp.status_code == 200:
-        js = resp.json()
-        if js['code'] == 200:
-            data = js['data']
-            icon = data['icon']
-            cover = data['cover']
-            title = data['title']
-            url = data['url']
-            related_token = db.session.query(RelatedToken).filter(RelatedToken.token_address==token, RelatedToken.app_key==app_key).first()
-            if related_token:
-                related_token.app_icon = icon
-                related_token.app_cover =cover
-                related_token.app_title = title
-                related_token.app_url = url
-            else:
-                related_token = RelatedToken(
-                    token_address=token,
-                    app_key = app_key,
-                    app_icon = icon,
-                    app_cover = cover,
-                    app_title= title,
-                    app_url = url
-                )
-                db.session.add(related_token)
-            db.session.commit()
-            res.update(data=data)
-            return res.data
-
-    res.update(code=ResponseCode.NoResourceFound)
+    
+    related_token = RelatedToken(
+        token_address=token,
+        app_icon = icon,
+        app_title= title,
+        app_url = url
+    )
+    db.session.add(related_token)
+    db.session.commit()
+    res.update(data={
+        'icon':related_token.app_icon,
+        'title':related_token.app_title,
+        'url':related_token.app_url,
+        'token': related_token.token
+    })
     return res.data
 
 def related_app(request):

@@ -26,8 +26,8 @@ class Comment(Base):
 class RelatedToken(Base):
     __tablename__ = 'related_token'
 
-    token_address = Column(String, nullable=False, primary_key=True)
-    app_key = Column(String, nullable=False, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token_address = Column(String, nullable=False)
     app_icon = Column(String, nullable=False)
     app_cover = Column(String, nullable=False)
     app_title = Column(String, nullable=False)
